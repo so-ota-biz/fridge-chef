@@ -1,0 +1,74 @@
+graph TB
+    subgraph "Client Tier"
+        A[Web Browser]
+        B[Mobile Browser]
+    end
+    
+    subgraph "CDN"
+        C[Cloudflare CDN]
+    end
+    
+    subgraph "Frontend (AWS S3)"
+        D[Next.js SPA]
+        E[Static Assets]
+    end
+    
+    subgraph "Backend (Render)"
+        F[NestJS API Server]
+        G[Authentication Service]
+        H[Recipe Service]
+        I[Image Service]
+        J[AI Integration Service]
+    end
+    
+    subgraph "Database Layer"
+        K[(PostgreSQL)]
+        L[Redis Cache]
+    end
+    
+    subgraph "File Storage"
+        M[AWS S3 Bucket]
+    end
+    
+    subgraph "External APIs"
+        N[Nano Banana API]
+        O[OpenAI GPT-4 API]
+        P[Supabase Auth]
+    end
+    
+    subgraph "Monitoring & Analytics"
+        Q[CloudWatch]
+        R[Sentry]
+        S[Google Analytics]
+    end
+    
+    A --> C
+    B --> C
+    C --> D
+    D --> E
+    D --> F
+    
+    F --> G
+    F --> H
+    F --> I
+    F --> J
+    
+    G --> P
+    H --> K
+    I --> M
+    J --> N
+    J --> O
+    
+    F --> L
+    F --> Q
+    F --> R
+    D --> S
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style C fill:#fff3e0
+    style D fill:#e8f5e8
+    style F fill:#fff8e1
+    style K fill:#fce4ec
+    style M fill:#f3e5f5
+    style N fill:#e0f2f1

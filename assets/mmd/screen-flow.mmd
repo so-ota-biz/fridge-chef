@@ -1,0 +1,37 @@
+flowchart TD
+    A[トップ画面] --> B[食材選択画面]
+    B --> C[条件指定画面]
+    C --> D[AI提案結果画面]
+    D --> E[レシピ詳細画面]
+    E --> F[調理完了・写真撮影画面]
+    F --> G[完成写真記録画面]
+    G --> H[アーカイブ画面]
+    
+    A --> I[ログイン画面]
+    I --> A
+    A --> J[新規登録画面]
+    J --> I
+    
+    A --> H
+    H --> K[料理記録詳細画面]
+    K --> L[写真ダウンロード・シェア画面]
+    
+    A --> M[プロフィール画面]
+    M --> N[設定画面]
+    
+    D --> O[再提案画面]
+    O --> D
+    
+    G --> P[SNSシェア画面]
+    K --> P
+    
+    E --> Q[お気に入り登録確認]
+    H --> R[検索・フィルタ画面]
+    
+    classDef primary fill:#e1f5fe
+    classDef secondary fill:#f3e5f5
+    classDef action fill:#e8f5e8
+    
+    class A,B,C,D,E primary
+    class F,G,H secondary
+    class I,J,M,N,O,P,Q,R action
