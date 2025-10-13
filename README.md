@@ -44,5 +44,5 @@ git commit -m "add: ログイン画面を実装 (closes #12)"
 
 - Project Board をカンバンとして利用
 
-カラム例: `Todo` → `Doing` → `Review` → `Done`
+カラム: `Todo` → `In Progress` → `Done`
 
