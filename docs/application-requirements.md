@@ -463,9 +463,10 @@ So that 家族が喜んだ料理をまた作れる
 - **ORM**: Prisma
 
 #### 認証
-- **認証プロバイダー**: Supabase Auth
-- **初期認証方式**: メールアドレス認証
-- **ソーシャルログイン**: Google, Apple（将来実装）※Supabase Auth + NextAuth.js で実装予定
+- **認証基盤**: NestJSバックエンドでJWT認証を実装
+- **初期認証方式**: メールアドレス認証のみ対応（ソーシャルログインなし）
+- **データベース**: SupabaseのPostgreSQL（auth.usersテーブルのみ使用）
+- **将来の拡張**: SupabaseのGoTrueを使用したソーシャルログイン実装の可能性あり
 
 #### AI・機械学習
 - **画像生成**: Nano Banana (Gemini 2.5 Flash Image) / DALL-E 3
@@ -503,7 +504,7 @@ So that 家族が喜んだ料理をまた作れる
 #### 外部API連携
 - **OpenAI API**: GPT-4, DALL-E 3
 - **Nano Banana API**: 画像生成
-- **Supabase API**: 認証・ファイルストレージ
+- **Supabase API**: データベース接続、将来的な認証基盤
 
 ### セキュリティ技術要件
 
