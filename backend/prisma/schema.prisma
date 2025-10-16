@@ -1,0 +1,42 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["views"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserProfile {
+  id               String    @id @db.Uuid
+  displayName      String?   @map("display_name")
+  firstName        String?   @map("first_name")
+  lastName         String?   @map("last_name")
+  avatarUrl        String?   @map("avatar_url")
+  isPremium        Boolean   @default(false) @map("is_premium")
+  premiumExpiresAt DateTime? @map("premium_expires_at") @db.Timestamptz(6)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([displayName], map: "idx_user_profiles_display_name")
+  @@index([isPremium, premiumExpiresAt], map: "idx_user_profiles_premium")
+  @@map("user_profiles")
+}
+
+view UserProfileView {
+  id               String    @unique @db.Uuid
+  email            String    @db.VarChar(255)
+  displayName      String?   @map("display_name")
+  firstName        String?   @map("first_name")
+  lastName         String?   @map("last_name")
+  avatarUrl        String?   @map("avatar_url")
+  isPremium        Boolean   @map("is_premium")
+  premiumExpiresAt DateTime? @map("premium_expires_at") @db.Timestamptz(6)
+  emailConfirmedAt DateTime? @map("email_confirmed_at") @db.Timestamptz(6)
+  lastSignInAt     DateTime? @map("last_sign_in_at") @db.Timestamptz(6)
+  createdAt        DateTime  @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @map("updated_at") @db.Timestamptz(6)
+
+  @@map("user_profile_view")
+}
