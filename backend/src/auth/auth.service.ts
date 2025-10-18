@@ -45,11 +45,16 @@ export class AuthService {
     const { email, password, displayName, firstName, lastName } = signUpDto
 
     try {
-      // Supabase Admin SDKでユーザー作成（メール確認必須）
-      const { data: authData, error: authError } = await this.supabaseAdmin.auth.admin.createUser({
+      // 環境変数からフロントエンドURLを取得
+      const frontendUrl = this.configService.get<string>('FRONTEND_URL')
+
+      // 通常のサインアップ（メール確認付き）
+      const { data: authData, error: authError } = await this.supabaseAdmin.auth.signUp({
         email,
         password,
-        email_confirm: false, // メール確認が必要
+        options: {
+          //emailRedirectTo: `${frontendUrl}/auth/callback`, // ← 環境変数を使用
+        },
       })
 
       if (authError) {
@@ -81,7 +86,6 @@ export class AuthService {
         throw new InternalServerErrorException('ユーザープロファイルの取得に失敗しました')
       }
 
-      // メール確認が必要なため、トークンは返さない
       return {
         user: {
           id: userProfile.id,
@@ -214,6 +218,13 @@ export class AuthService {
 
     if (errorMessage.includes('Invalid login credentials')) {
       throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません')
+    }
+
+    // メール未確認エラーを追加
+    if (errorMessage.includes('Email not confirmed')) {
+      throw new UnauthorizedException(
+        'メールアドレスが確認されていません。受信トレイを確認し、確認リンクをクリックしてください。',
+      )
     }
 
     throw new InternalServerErrorException(`認証エラー: ${errorMessage}`)
