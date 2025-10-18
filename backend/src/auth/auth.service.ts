@@ -5,22 +5,14 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
+import { ConfigService } from '@nestjs/config'
 import { createClient, SupabaseClient, AuthError } from '@supabase/supabase-js'
 import { PrismaService } from '@/prisma/prisma.service'
 import { SignUpDto } from '@/auth/dto/sign-up.dto'
 import { SignInDto } from '@/auth/dto/sign-in.dto'
+import { SignUpResponseDto } from '@/auth/dto/sign-up-response.dto'
 import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
 import { Database } from '@/types/database.types'
-
-// 型定義
-interface UserProfile {
-  id: string
-  email: string
-  displayName: string | null
-  avatarUrl: string | null
-  isPremium: boolean
-}
-
 @Injectable()
 export class AuthService {
   private supabaseAdmin: SupabaseClient<Database>
@@ -28,35 +20,36 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {
     // Supabase Admin Client（Service Role Key使用）
-    const supabaseUrl = process.env.SUPABASE_URL
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseUrl = this.configService.get<string>('SUPABASE_URL')
+    const supabaseServiceKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY')
 
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new InternalServerErrorException('Supabase設定が不完全です')
     }
 
-    this.supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    this.supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
       },
-    }) as SupabaseClient<Database>
+    })
   }
 
   /**
    * サインアップ処理
    */
-  async signUp(signUpDto: SignUpDto): Promise<AuthResponseDto> {
+  async signUp(signUpDto: SignUpDto): Promise<SignUpResponseDto> {
     const { email, password, displayName, firstName, lastName } = signUpDto
 
     try {
-      // Supabase Admin SDKでユーザー作成
+      // Supabase Admin SDKでユーザー作成（メール確認必須）
       const { data: authData, error: authError } = await this.supabaseAdmin.auth.admin.createUser({
         email,
         password,
-        email_confirm: true, // 自動で確認済みにする（開発用）
+        email_confirm: false, // メール確認が必要
       })
 
       if (authError) {
@@ -67,8 +60,7 @@ export class AuthService {
         throw new InternalServerErrorException('ユーザーの作成に失敗しました')
       }
 
-      // トリガーでuser_profilesが自動作成されているはずなので、
-      // 追加情報があれば更新
+      // トリガーでuser_profilesが自動作成されているはずなので、追加情報があれば更新
       if (displayName || firstName || lastName) {
         await this.prisma.userProfile.update({
           where: { id: authData.user.id },
@@ -89,11 +81,8 @@ export class AuthService {
         throw new InternalServerErrorException('ユーザープロファイルの取得に失敗しました')
       }
 
-      // 独自JWTトークンを発行
-      const tokens = await this.generateTokens(authData.user.id, email)
-
+      // メール確認が必要なため、トークンは返さない
       return {
-        ...tokens,
         user: {
           id: userProfile.id,
           email: userProfile.email,
@@ -101,6 +90,8 @@ export class AuthService {
           avatarUrl: userProfile.avatarUrl,
           isPremium: userProfile.isPremium,
         },
+        message:
+          '確認メールを送信しました。メール内のリンクをクリックしてアカウントを有効化してください。',
       }
     } catch (error) {
       if (error instanceof ConflictException || error instanceof InternalServerErrorException) {
@@ -131,6 +122,13 @@ export class AuthService {
 
       if (!authData.user) {
         throw new UnauthorizedException('認証に失敗しました')
+      }
+
+      // メール確認チェック
+      if (!authData.user.email_confirmed_at) {
+        throw new UnauthorizedException(
+          'メールアドレスが確認されていません。受信トレイを確認し、確認リンクをクリックしてください。',
+        )
       }
 
       // user_profile_viewから情報取得
@@ -198,27 +196,6 @@ export class AuthService {
     ])
 
     return { accessToken, refreshToken }
-  }
-
-  /**
-   * トークンからユーザー情報を取得（ガードで使用）
-   */
-  async validateUser(userId: string): Promise<UserProfile> {
-    const userProfile = await this.prisma.userProfileView.findUnique({
-      where: { id: userId },
-    })
-
-    if (!userProfile) {
-      throw new UnauthorizedException('ユーザーが見つかりません')
-    }
-
-    return {
-      id: userProfile.id,
-      email: userProfile.email,
-      displayName: userProfile.displayName,
-      avatarUrl: userProfile.avatarUrl,
-      isPremium: userProfile.isPremium,
-    }
   }
 
   /**
