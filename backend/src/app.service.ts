@@ -7,7 +7,7 @@ export class AppService {
 
   async getHello(): Promise<string> {
     // データベース接続テスト
-    const userCount = await this.prisma.userProfile.count()
+    const userCount = await this.prisma.user.count()
     return `Hello World! Users in DB: ${userCount}`
   }
 }

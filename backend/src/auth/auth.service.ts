@@ -53,6 +53,7 @@ export class AuthService {
         email,
         password,
         options: {
+          //TODO
           //emailRedirectTo: `${frontendUrl}/auth/callback`, // ← 環境変数を使用
         },
       })
@@ -65,9 +66,9 @@ export class AuthService {
         throw new InternalServerErrorException('ユーザーの作成に失敗しました')
       }
 
-      // トリガーでuser_profilesが自動作成されているはずなので、追加情報があれば更新
+      // トリガーでusersが自動作成されているはずなので、追加情報があれば更新
       if (displayName || firstName || lastName) {
-        await this.prisma.userProfile.update({
+        await this.prisma.user.update({
           where: { id: authData.user.id },
           data: {
             displayName: displayName || null,
@@ -77,22 +78,26 @@ export class AuthService {
         })
       }
 
-      // user_profile_viewから最新情報を取得
-      const userProfile = await this.prisma.userProfileView.findUnique({
+      // public.usersから最新情報を取得
+      const user = await this.prisma.user.findUnique({
         where: { id: authData.user.id },
+        select: {
+          id: true,
+          displayName: true,
+          avatarUrl: true,
+        },
       })
 
-      if (!userProfile) {
+      if (!user) {
         throw new InternalServerErrorException('ユーザープロファイルの取得に失敗しました')
       }
 
       return {
         user: {
-          id: userProfile.id,
-          email: userProfile.email,
-          displayName: userProfile.displayName,
-          avatarUrl: userProfile.avatarUrl,
-          isPremium: userProfile.isPremium,
+          id: user.id,
+          email: authData.user.email!,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
         },
         message:
           '確認メールを送信しました。メール内のリンクをクリックしてアカウントを有効化してください。',
@@ -135,12 +140,12 @@ export class AuthService {
         )
       }
 
-      // user_profile_viewから情報取得
-      const userProfile = await this.prisma.userProfileView.findUnique({
+      // public.usersからユーザー情報を取得
+      const user = await this.prisma.user.findUnique({
         where: { id: authData.user.id },
       })
 
-      if (!userProfile) {
+      if (!user) {
         throw new InternalServerErrorException('ユーザー情報の取得に失敗しました')
       }
 
@@ -150,11 +155,10 @@ export class AuthService {
       return {
         ...tokens,
         user: {
-          id: userProfile.id,
-          email: userProfile.email,
-          displayName: userProfile.displayName,
-          avatarUrl: userProfile.avatarUrl,
-          isPremium: userProfile.isPremium,
+          id: user.id,
+          email: authData.user.email!,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl,
         },
       }
     } catch (error) {
@@ -169,15 +173,23 @@ export class AuthService {
    * トークンリフレッシュ
    */
   async refreshToken(userId: string): Promise<{ accessToken: string }> {
-    const userProfile = await this.prisma.userProfileView.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: userId },
+      select: { id: true },
     })
 
-    if (!userProfile) {
-      throw new UnauthorizedException('ユーザーが見つかりません')
+    if (!user) {
+      throw new UnauthorizedException('User not found')
     }
 
-    const payload = { sub: userId, email: userProfile.email }
+    // auth.usersからemailを取得
+    const { data: authData, error } = await this.supabaseAdmin.auth.admin.getUserById(userId)
+
+    if (error || !authData?.user?.email) {
+      throw new UnauthorizedException('Failed to fetch user email')
+    }
+
+    const payload = { sub: userId, email: authData.user.email }
     const accessToken = await this.jwtService.signAsync(payload)
 
     return { accessToken }

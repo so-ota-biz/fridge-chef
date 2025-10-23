@@ -16,7 +16,6 @@ interface ValidatedUser {
   email: string
   displayName: string | null
   avatarUrl: string | null
-  isPremium: boolean
 }
 
 @Injectable()
@@ -33,20 +32,25 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   async validate(payload: JwtPayload): Promise<ValidatedUser> {
-    const userProfile = await this.prisma.userProfileView.findUnique({
+    const user = await this.prisma.user.findUnique({
       where: { id: payload.sub },
+      select: {
+        id: true,
+        displayName: true,
+        avatarUrl: true,
+      },
     })
 
-    if (!userProfile) {
+    if (!user) {
       throw new UnauthorizedException('ユーザーが見つかりません')
     }
 
+    // JWTペイロードからemailを取得（auth.usersの情報）
     return {
-      id: userProfile.id,
-      email: userProfile.email,
-      displayName: userProfile.displayName,
-      avatarUrl: userProfile.avatarUrl,
-      isPremium: userProfile.isPremium,
+      id: user.id,
+      email: payload.email,
+      displayName: user.displayName,
+      avatarUrl: user.avatarUrl,
     }
   }
 }

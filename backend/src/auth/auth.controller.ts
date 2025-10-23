@@ -22,7 +22,6 @@ interface RequestWithUser extends Request {
     email: string
     displayName: string | null
     avatarUrl: string | null
-    isPremium: boolean
   }
 }
 

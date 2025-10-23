@@ -4,7 +4,6 @@ export class SignUpResponseDto {
     email: string
     displayName: string | null
     avatarUrl: string | null
-    isPremium: boolean
   }
   message: string
 }

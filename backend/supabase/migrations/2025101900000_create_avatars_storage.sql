@@ -1,5 +1,5 @@
 -- ===================================================
--- Create avatars bucket for user profile images
+-- Create avatars bucket for user images
 -- ===================================================
 
 -- バケット作成（公開バケット）

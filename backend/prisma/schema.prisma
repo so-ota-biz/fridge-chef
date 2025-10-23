@@ -1,6 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["views"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -19,19 +18,4 @@ model User {
 
   @@index([displayName], map: "idx_users_display_name")
   @@map("users")
-}
-
-view UserView {
-  id               String    @unique @db.Uuid
-  displayName      String?   @map("display_name")
-  firstName        String?   @map("first_name")
-  lastName         String?   @map("last_name")
-  avatarUrl        String?   @map("avatar_url")
-  createdAt        DateTime  @map("created_at") @db.Timestamptz(6)
-  updatedAt        DateTime  @map("updated_at") @db.Timestamptz(6)
-  email            String    @db.VarChar(255)
-  emailConfirmedAt DateTime? @map("email_confirmed_at") @db.Timestamptz(6)
-  lastSignInAt     DateTime? @map("last_sign_in_at") @db.Timestamptz(6)
-
-  @@map("user_view")
 }

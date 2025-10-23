@@ -6,6 +6,5 @@ export class AuthResponseDto {
     email: string
     displayName: string | null
     avatarUrl: string | null
-    isPremium: boolean
   }
 }

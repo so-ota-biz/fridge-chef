@@ -20,13 +20,13 @@ CREATE INDEX idx_users_display_name ON public.users(display_name);
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
 -- RLSポリシー: 自分のレコードのみ読み取り可能
-CREATE POLICY "Users can view their own profile"
+CREATE POLICY "Users can view their own record"
 ON public.users FOR SELECT
 TO authenticated
 USING (auth.uid() = id);
 
 -- RLSポリシー: 自分のレコードのみ更新可能
-CREATE POLICY "Users can update their own profile"
+CREATE POLICY "Users can update their own record"
 ON public.users FOR UPDATE
 TO authenticated
 USING (auth.uid() = id);
@@ -84,25 +84,3 @@ CREATE TRIGGER on_auth_user_deleted
 AFTER DELETE ON auth.users
 FOR EACH ROW
 EXECUTE FUNCTION public.handle_delete_user();
-
--- ===================================================
--- View: user_view
--- ===================================================
-
-CREATE VIEW public.user_view AS
-SELECT 
-  u.id,
-  u.display_name,
-  u.first_name,
-  u.last_name,
-  u.avatar_url,
-  u.created_at,
-  u.updated_at,
-  au.email,
-  au.email_confirmed_at,
-  au.last_sign_in_at
-FROM public.users u
-LEFT JOIN auth.users au ON u.id = au.id;
-
--- RLSポリシー（ビューにも適用）
-ALTER VIEW public.user_view SET (security_invoker = on);
