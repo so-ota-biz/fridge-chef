@@ -1,20 +1,19 @@
-export interface UserProfile {
+export interface User {
   id: string
   email: string | null
   displayName: string | null
   firstName: string | null
   lastName: string | null
   avatarUrl: string | null
-  isPremium: boolean | null
-  premiumExpiresAt: Date | null
-  createdAt: Date | null
-  updatedAt: Date | null
+  createdAt: Date
+  updatedAt: Date
 }
 
-export interface UpdateProfileResponse {
+export interface UpdateUserResponse {
   id: string
   displayName: string | null
   firstName: string | null
   lastName: string | null
+  createdAt: Date
   updatedAt: Date
 }
