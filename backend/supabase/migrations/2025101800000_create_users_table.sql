@@ -9,8 +9,8 @@ CREATE TABLE IF NOT EXISTS public.users (
   first_name TEXT,
   last_name TEXT,
   avatar_url TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- インデックスの作成

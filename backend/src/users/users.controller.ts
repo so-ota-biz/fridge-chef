@@ -16,7 +16,7 @@ export class UsersController {
    */
   @Get('me')
   async getMe(@Request() req: RequestWithUser): Promise<User> {
-    return this.usersService.getUser(req.user.id)
+    return await this.usersService.getUser(req.user.id)
   }
 
   /**

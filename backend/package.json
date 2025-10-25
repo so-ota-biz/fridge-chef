@@ -20,13 +20,14 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "db:types": "supabase gen types typescript --local --schema public > src/types/database.types.ts",
     "db:generate": "prisma generate",
+    "db:pull": "prisma db pull",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
     "prisma:reset": "prisma migrate reset",
     "supabase:push": "supabase db push",
     "supabase:up": "supabase migration up",
     "supabase:reset": "supabase db reset",
-    "db:setup": "npm run supabase:reset && npm run db:types && npm run db:generate",
+    "db:setup": "npm run supabase:reset && npm run db:types && npm run db:generate && npm run db:pull",
     "db:update": "npm run prisma:migrate && npm run db:types && npm run db:generate"
   },
   "dependencies": {

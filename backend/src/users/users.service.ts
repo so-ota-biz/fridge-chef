@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common'
 import { PrismaService } from '@/prisma/prisma.service'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { ConfigService } from '@nestjs/config'
@@ -8,20 +8,25 @@ import { User, UpdateUserResponse } from './types/user.type'
 
 @Injectable()
 export class UsersService {
-  private readonly supabase: SupabaseClient<Database>
+  private readonly supabaseAdmin: SupabaseClient<Database>
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
     const supabaseUrl = this.configService.get<string>('SUPABASE_URL')
-    const supabaseKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY')
+    const supabaseServiceKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY')
 
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Supabase configuration is missing')
     }
 
-    this.supabase = createClient(supabaseUrl, supabaseKey)
+    this.supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    })
   }
 
   async getUser(userId: string): Promise<User> {
@@ -43,10 +48,10 @@ export class UsersService {
     }
 
     // auth.usersからemailを取得
-    const { data: authData, error } = await this.supabase.auth.admin.getUserById(userId)
+    const { data: authData, error } = await this.supabaseAdmin.auth.admin.getUserById(userId)
 
-    if (error) {
-      console.error('Failed to fetch auth user:', error)
+    if (error || !authData?.user?.email) {
+      throw new UnauthorizedException('Failed to fetch user email')
     }
 
     return {
