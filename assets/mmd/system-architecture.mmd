@@ -8,7 +8,7 @@ graph TB
         C[Cloudflare CDN]
     end
     
-    subgraph "Frontend (AWS S3)"
+    subgraph "Frontend (AWS S3 or Vercel)"
         D[Next.js SPA]
         E[Static Assets]
     end
@@ -23,11 +23,10 @@ graph TB
     
     subgraph "Database Layer"
         K[(PostgreSQL)]
-        L[Redis Cache]
     end
     
     subgraph "File Storage"
-        M[AWS S3 Bucket]
+        M[Supabase Storage]
     end
     
     subgraph "External APIs"
@@ -59,7 +58,6 @@ graph TB
     J --> N
     J --> O
     
-    F --> L
     F --> Q
     F --> R
     D --> S
