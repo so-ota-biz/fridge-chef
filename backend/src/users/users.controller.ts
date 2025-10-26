@@ -1,9 +1,22 @@
-import { Controller, Get, Patch, Body, UseGuards, Request } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  Patch,
+  Post,
+  Body,
+  UseGuards,
+  Request,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
+} from '@nestjs/common'
 import { UsersService } from './users.service'
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
 import type { RequestWithUser } from '@/auth/types/request-with-user.type'
 import { User, UpdateUserResponse } from './types/user.type'
 import { UpdateUserDto } from './dto/update-user.dto'
+import { UploadAvatarResponse } from './types/upload-avatar.type'
+import { FileInterceptor } from '@nestjs/platform-express'
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -29,5 +42,22 @@ export class UsersController {
     @Body() updateUserDto: UpdateUserDto,
   ): Promise<UpdateUserResponse> {
     return await this.usersService.updateUser(req.user.id, updateUserDto)
+  }
+
+  /**
+   * POST /users/me/avatar
+   * アバター画像アップロード
+   */
+  @Post('me/avatar')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadAvatar(
+    @Request() req: RequestWithUser,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<UploadAvatarResponse> {
+    if (!file) {
+      throw new BadRequestException('No file uploaded')
+    }
+
+    return this.usersService.uploadAvatar(req.user.id, file)
   }
 }

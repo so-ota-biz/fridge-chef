@@ -12,9 +12,11 @@ services:
     environment:
       - NODE_ENV=development
       - DATABASE_URL=postgresql://postgres:postgres@supabase_db_backend:5432/postgres
-      - SUPABASE_URL=http://supabase_kong_backend:8000
+      - SUPABASE_URL=http://supabase_kong_backend:8000 # コンテナ間通信用
+      - SUPABASE_PUBLIC_URL=http://127.0.0.1:54321 # ブラウザアクセス用
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
     volumes:
@@ -22,6 +24,8 @@ services:
       - /app/node_modules
     networks:
       - supabase_network_backend
+    tty: true
+    stdin_open: true
     command: npm run start:dev
 
 networks:

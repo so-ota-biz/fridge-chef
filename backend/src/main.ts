@@ -1,9 +1,25 @@
 import { NestFactory } from '@nestjs/core'
-import { ValidationPipe } from '@nestjs/common'
+import { ValidationPipe, Logger } from '@nestjs/common'
 import { AppModule } from './app.module'
+import { Request, Response, NextFunction } from 'express'
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
+
+  // HTTPリクエストログ
+  const logger = new Logger('HTTP')
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    const { method, originalUrl } = req
+    const start = Date.now()
+
+    res.on('finish', () => {
+      const { statusCode } = res
+      const duration = Date.now() - start
+      logger.log(`${method} ${originalUrl} ${statusCode} - ${duration}ms`)
+    })
+
+    next()
+  })
 
   // グローバルバリデーションパイプを有効化
   app.useGlobalPipes(

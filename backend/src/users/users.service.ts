@@ -5,6 +5,11 @@ import { ConfigService } from '@nestjs/config'
 import { Database } from '@/types/database.types'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { User, UpdateUserResponse } from './types/user.type'
+import { UploadAvatarResponse } from './types/upload-avatar.type'
+import * as path from 'path'
+import { v4 as uuidv4 } from 'uuid'
+import { BadRequestException } from '@nestjs/common'
+import { Multer } from 'multer'
 
 @Injectable()
 export class UsersService {
@@ -86,5 +91,105 @@ export class UsersService {
     })
 
     return updatedUser
+  }
+
+  /**
+   * アバター画像をアップロードして、ユーザー情報を更新
+   */
+  async uploadAvatar(userId: string, file: Express.Multer.File): Promise<UploadAvatarResponse> {
+    // ファイル形式チェック
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+    if (!allowedMimeTypes.includes(file.mimetype)) {
+      throw new BadRequestException('Invalid file type. Only JPEG, PNG, WebP, and GIF are allowed.')
+    }
+
+    // ファイルサイズチェック（5MB）
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    if (file.size > maxSize) {
+      throw new BadRequestException('File size exceeds 5MB limit.')
+    }
+
+    // 新しいファイル名を生成（UUID + 拡張子）
+    const fileExtension = path.extname(file.originalname)
+    const fileName = `${uuidv4()}${fileExtension}`
+    const filePath = `${userId}/${fileName}`
+
+    // 既存のアバターを取得
+    const existingUser = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { avatarUrl: true },
+    })
+    // 古いアバターを削除（存在する場合）
+    if (existingUser?.avatarUrl) {
+      await this.deleteOldAvatar(existingUser.avatarUrl)
+    }
+
+    // Supabase Storageにアップロード
+    const { error: uploadError } = await this.supabaseAdmin.storage
+      .from('avatars')
+      .upload(filePath, file.buffer, {
+        contentType: file.mimetype,
+        cacheControl: '3600',
+        upsert: false,
+      })
+
+    if (uploadError) {
+      throw new BadRequestException(`Failed to upload avatar: ${uploadError.message}`)
+    }
+
+    // 公開URLを取得
+    const avatarUrl = this.getPublicUrl('avatars', filePath)
+
+    // ユーザー情報を更新
+    const updatedUser = await this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+      select: {
+        avatarUrl: true,
+        updatedAt: true,
+      },
+    })
+
+    return {
+      avatarUrl: updatedUser.avatarUrl!,
+      updatedAt: updatedUser.updatedAt,
+    }
+  }
+
+  /**
+   * Supabase Storageの公開URLを取得（Docker環境対応）
+   */
+  private getPublicUrl(bucketName: string, filePath: string): string {
+    const { data: urlData } = this.supabaseAdmin.storage.from(bucketName).getPublicUrl(filePath)
+
+    // Docker環境の内部URLを公開URLに置換
+    const publicUrl = this.configService.get<string>('SUPABASE_PUBLIC_URL')
+    const convertedUrl = urlData.publicUrl.replace(
+      'http://supabase_kong_backend:8000',
+      publicUrl || 'http://127.0.0.1:54321',
+    )
+
+    return convertedUrl
+  }
+
+  /**
+   * 古いアバター画像をStorageから削除
+   */
+  private async deleteOldAvatar(avatarUrl: string): Promise<void> {
+    try {
+      // URLからファイルパスを抽出
+      // 例: http://127.0.0.1:54321/storage/v1/object/public/avatars/user-id/filename.jpg
+      //  → user-id/filename.jpg
+      const urlParts = avatarUrl.split('/avatars/')
+      if (urlParts.length < 2) {
+        return
+      }
+      const filePath = urlParts[1]
+
+      await this.supabaseAdmin.storage.from('avatars').remove([filePath])
+    } catch (error) {
+      // 削除失敗はログ出力のみ（処理は継続）
+      console.error('Failed to delete old avatar:', error)
+    }
   }
 }
