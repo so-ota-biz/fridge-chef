@@ -9,6 +9,8 @@ import {
   UseInterceptors,
   UploadedFile,
   BadRequestException,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common'
 import { UsersService } from './users.service'
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
@@ -17,6 +19,7 @@ import { User, UpdateUserResponse } from './types/user.type'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { UploadAvatarResponse } from './types/upload-avatar.type'
 import { FileInterceptor } from '@nestjs/platform-express'
+import { ChangePasswordDto } from './dto/change-password.dto'
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -59,5 +62,22 @@ export class UsersController {
     }
 
     return this.usersService.uploadAvatar(req.user.id, file)
+  }
+
+  /**
+   * POST /users/me/password
+   * パスワード変更
+   */
+  @Post('me/password')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async changePassword(
+    @Request() req: RequestWithUser,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ): Promise<void> {
+    await this.usersService.changePassword(
+      req.user.id,
+      changePasswordDto.currentPassword,
+      changePasswordDto.newPassword,
+    )
   }
 }

@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, NotFoundException } from '@nestjs/common'
+import {
+  Injectable,
+  UnauthorizedException,
+  NotFoundException,
+  InternalServerErrorException,
+} from '@nestjs/common'
 import { PrismaService } from '@/prisma/prisma.service'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { ConfigService } from '@nestjs/config'
@@ -190,6 +195,56 @@ export class UsersService {
     } catch (error) {
       // 削除失敗はログ出力のみ（処理は継続）
       console.error('Failed to delete old avatar:', error)
+    }
+  }
+
+  /**
+   * パスワード変更
+   * @param userId ユーザーID
+   * @param currentPassword 現在のパスワード
+   * @param newPassword 新しいパスワード
+   */
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<void> {
+    // STEP1. 現在のパスワードを確認
+    const { data: authData } = await this.supabaseAdmin.auth.admin.getUserById(userId)
+
+    if (!authData?.user) {
+      throw new NotFoundException('ユーザーが見つかりません')
+    }
+
+    if (!authData?.user?.email) {
+      throw new NotFoundException(
+        'メールアドレスが登録されていないため、パスワードを変更できません',
+      )
+    }
+
+    // STEP2. 現在のパスワードと新しいパスワードが同じかチェック
+    if (currentPassword === newPassword) {
+      throw new BadRequestException('新しいパスワードは現在のパスワードと異なる必要があります')
+    }
+
+    // STEP3. 現在のパスワードで認証を試みる
+    const { error: signInError } = await this.supabaseAdmin.auth.signInWithPassword({
+      email: authData.user.email,
+      password: currentPassword,
+    })
+
+    if (signInError) {
+      throw new UnauthorizedException('現在のパスワードが正しくありません')
+    }
+
+    // STEP3. 新しいパスワードに更新
+    const { error: updateError } = await this.supabaseAdmin.auth.admin.updateUserById(userId, {
+      password: newPassword,
+    })
+
+    if (updateError) {
+      console.error('Password update error:', updateError)
+      throw new InternalServerErrorException('パスワードの変更に失敗しました')
     }
   }
 }
