@@ -4,69 +4,45 @@ graph TB
         B[Mobile Browser]
     end
     
-    subgraph "CDN"
-        C[Cloudflare CDN]
-    end
-    
-    subgraph "Frontend (AWS S3 or Vercel)"
+    subgraph "Frontend (Vercel/AWS S3)"
         D[Next.js SPA]
         E[Static Assets]
     end
     
     subgraph "Backend (Render)"
         F[NestJS API Server]
-        G[Authentication Service]
-        H[Recipe Service]
-        I[Image Service]
-        J[AI Integration Service]
+        G[Recipe Service]
+        H[AI Integration Service]
     end
     
-    subgraph "Database Layer"
-        K[(PostgreSQL)]
-    end
-    
-    subgraph "File Storage"
-        M[Supabase Storage]
-    end
-    
-    subgraph "External APIs"
-        N[Nano Banana API]
-        O[OpenAI GPT-4 API]
+    subgraph "All-in-One Backend (Supabase)"
         P[Supabase Auth]
+        K[(PostgreSQL)]
+        M[File Storage]
     end
     
-    subgraph "Monitoring & Analytics"
-        Q[CloudWatch]
-        R[Sentry]
-        S[Google Analytics]
+    subgraph "External APIs (MVP Only)"
+        O[OpenAI GPT-4 API]
     end
     
-    A --> C
-    B --> C
-    C --> D
+    A --> D
+    B --> D
     D --> E
     D --> F
     
     F --> G
     F --> H
-    F --> I
-    F --> J
     
-    G --> P
-    H --> K
-    I --> M
-    J --> N
-    J --> O
-    
-    F --> Q
-    F --> R
-    D --> S
+    F --> P
+    F --> K
+    F --> M
+    H --> O
     
     style A fill:#e3f2fd
     style B fill:#e3f2fd
-    style C fill:#fff3e0
     style D fill:#e8f5e8
     style F fill:#fff8e1
+    style P fill:#e1f5fe
     style K fill:#fce4ec
     style M fill:#f3e5f5
-    style N fill:#e0f2f1
+    style O fill:#e0f2f1
