@@ -3,6 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
   InternalServerErrorException,
+  Logger,
 } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
@@ -15,28 +16,31 @@ import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
 import { Database } from '@/types/database.types'
 @Injectable()
 export class AuthService {
-  private supabaseAdmin: SupabaseClient<Database>
+  private readonly logger = new Logger(AuthService.name)
+  private _supabaseAdmin: SupabaseClient<Database> | null = null
+
+  private get supabaseAdmin(): SupabaseClient<Database> {
+    if (!this._supabaseAdmin) {
+      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        this.logger.error('Supabase configuration is missing at AuthService')
+        throw new InternalServerErrorException('Supabase configuration is missing at AuthService')
+      }
+
+      this.logger.log('Initializing Supabase client...at AuthService')
+      this._supabaseAdmin = createClient<Database>(
+        process.env.SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+      )
+      this.logger.log('Supabase client initialized at AuthService')
+    }
+    return this._supabaseAdmin
+  }
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-  ) {
-    // Supabase Admin Client（Service Role Key使用）
-    const supabaseUrl = this.configService.get<string>('SUPABASE_URL')
-    const supabaseServiceKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY')
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-      throw new InternalServerErrorException('Supabase設定が不完全です')
-    }
-
-    this.supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
-  }
+  ) {}
 
   /**
    * サインアップ処理
