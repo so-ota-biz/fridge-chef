@@ -15,6 +15,7 @@ import * as path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { BadRequestException } from '@nestjs/common'
 import { Multer } from 'multer'
+import { Prisma } from '@prisma/client'
 
 @Injectable()
 export class UsersService {
@@ -245,6 +246,109 @@ export class UsersService {
     if (updateError) {
       console.error('Password update error:', updateError)
       throw new InternalServerErrorException('パスワードの変更に失敗しました')
+    }
+  }
+
+  /**
+   * アカウント削除
+   * @param userId ユーザーID
+   * @param password パスワード（確認用）
+   */
+  async deleteAccount(userId: string, password: string): Promise<void> {
+    // 1. ユーザー情報を取得（auth.users から）
+    const { data: authData, error: getUserError } =
+      await this.supabaseAdmin.auth.admin.getUserById(userId)
+
+    if (getUserError || !authData?.user) {
+      throw new NotFoundException('ユーザーが見つかりません')
+    }
+
+    if (!authData.user.email) {
+      throw new BadRequestException(
+        'メールアドレスが登録されていないため、アカウントを削除できません',
+      )
+    }
+
+    // 2. パスワード確認
+    const { error: signInError } = await this.supabaseAdmin.auth.signInWithPassword({
+      email: authData.user.email,
+      password: password,
+    })
+
+    if (signInError) {
+      throw new UnauthorizedException('パスワードが正しくありません')
+    }
+
+    // 3. 削除処理
+    try {
+      // 3-1. public.users からユーザー情報を取得（avatar_url確認用）
+      const dbUser = await this.prisma.user.findUnique({
+        where: { id: userId },
+      })
+
+      if (!dbUser) {
+        throw new NotFoundException('ユーザーデータが見つかりません（public.users）')
+      }
+
+      // 3-2. アバター画像が存在する場合は削除
+      if (dbUser.avatarUrl) {
+        // avatarUrl から画像パスを抽出
+        // 例: http://127.0.0.1:54321/storage/v1/object/public/avatars/userId/filename.jpg
+        // -> userId/filename.jpg を取得
+        const urlParts = dbUser.avatarUrl.split('/avatars/')
+        if (urlParts.length > 1) {
+          const imagePath = urlParts[1]
+
+          const { error: deleteStorageError } = await this.supabaseAdmin.storage
+            .from('avatars')
+            .remove([imagePath])
+
+          if (deleteStorageError) {
+            console.error('Avatar deletion error:', deleteStorageError)
+            // ストレージ削除失敗はログ出力のみで処理は継続する
+          } else {
+            console.log(`Avatar deleted: ${imagePath}`)
+          }
+        }
+      }
+
+      // 3-3. public.users からユーザー削除
+      await this.prisma.user.delete({
+        where: { id: userId },
+      })
+      console.log(`User deleted from public.users: ${userId}`)
+
+      // 3-4. auth.users からユーザー削除
+      const { error: deleteAuthError } = await this.supabaseAdmin.auth.admin.deleteUser(userId)
+
+      if (deleteAuthError) {
+        console.error('Auth user deletion error:', deleteAuthError)
+        throw new InternalServerErrorException('アカウントの削除に失敗しました（auth.users）')
+      }
+      console.log(`User deleted from auth.users: ${userId}`)
+
+      // 4. 成功ログ
+      console.log(`Account deleted successfully for user: ${userId}`)
+    } catch (error) {
+      // エラーが既にNestJSの例外の場合はそのまま再スロー
+      if (
+        error instanceof NotFoundException ||
+        error instanceof UnauthorizedException ||
+        error instanceof InternalServerErrorException ||
+        error instanceof BadRequestException
+      ) {
+        throw error
+      }
+      // Prismaエラー
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === 'P2025') {
+          // Record not found
+          throw new NotFoundException('ユーザーが見つかりません')
+        }
+      }
+      // その他のエラー
+      console.error('Unexpected error during account deletion:', error)
+      throw new InternalServerErrorException('アカウント削除中に予期しないエラーが発生しました')
     }
   }
 }

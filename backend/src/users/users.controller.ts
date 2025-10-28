@@ -11,6 +11,7 @@ import {
   BadRequestException,
   HttpCode,
   HttpStatus,
+  Delete,
 } from '@nestjs/common'
 import { UsersService } from './users.service'
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
@@ -20,6 +21,7 @@ import { UpdateUserDto } from './dto/update-user.dto'
 import { UploadAvatarResponse } from './types/upload-avatar.type'
 import { FileInterceptor } from '@nestjs/platform-express'
 import { ChangePasswordDto } from './dto/change-password.dto'
+import { DeleteAccountDto } from './dto/delete-account.dto'
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -79,5 +81,19 @@ export class UsersController {
       changePasswordDto.currentPassword,
       changePasswordDto.newPassword,
     )
+  }
+
+  /**
+   * アカウント削除
+   * DELETE /users/me
+   */
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteAccount(
+    @Request() req: RequestWithUser,
+    @Body() deleteAccountDto: DeleteAccountDto,
+  ): Promise<void> {
+    await this.usersService.deleteAccount(req.user.id, deleteAccountDto.password)
   }
 }
