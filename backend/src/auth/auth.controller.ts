@@ -13,6 +13,7 @@ import { SignUpDto } from '@/auth/dto/sign-up.dto'
 import { SignInDto } from '@/auth/dto/sign-in.dto'
 import { SignUpResponseDto } from '@/auth/dto/sign-up-response.dto'
 import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
+import { RefreshTokenDto } from '@/auth/dto/refresh-token.dto'
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
 
 // リクエストにユーザー情報が含まれる型定義
@@ -54,10 +55,9 @@ export class AuthController {
    * POST /auth/refresh
    */
   @Post('refresh')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Request() req: RequestWithUser): Promise<{ accessToken: string }> {
-    return this.authService.refreshToken(req.user.id)
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto): Promise<{ accessToken: string }> {
+    return this.authService.refreshToken(refreshTokenDto.refreshToken)
   }
 
   /**

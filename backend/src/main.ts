@@ -31,6 +31,7 @@ async function bootstrap() {
   )
 
   await app.listen(3000)
-  console.log('application is running on: http://localhost:3000')
+  const appLogger = new Logger('Application')
+  appLogger.log('application is running on: http://localhost:3000')
 }
-bootstrap()
+void bootstrap()

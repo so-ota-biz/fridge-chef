@@ -15,7 +15,6 @@ import { UploadAvatarResponse } from './types/upload-avatar.type'
 import * as path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { BadRequestException } from '@nestjs/common'
-import { Multer } from 'multer'
 import { Prisma } from '@prisma/client'
 
 @Injectable()
@@ -200,7 +199,7 @@ export class UsersService {
       await this.supabaseAdmin.storage.from('avatars').remove([filePath])
     } catch (error) {
       // 削除失敗はログ出力のみ（処理は継続）
-      console.error('Failed to delete old avatar:', error)
+      this.logger.error('Failed to delete old avatar:', error)
     }
   }
 
@@ -249,7 +248,7 @@ export class UsersService {
     })
 
     if (updateError) {
-      console.error('Password update error:', updateError)
+      this.logger.error('Password update error:', updateError)
       throw new InternalServerErrorException('パスワードの変更に失敗しました')
     }
   }
@@ -309,31 +308,27 @@ export class UsersService {
             .remove([imagePath])
 
           if (deleteStorageError) {
-            console.error('Avatar deletion error:', deleteStorageError)
+            this.logger.error('Avatar deletion error:', deleteStorageError)
             // ストレージ削除失敗はログ出力のみで処理は継続する
           } else {
-            console.log(`Avatar deleted: ${imagePath}`)
+            this.logger.log(`Avatar deleted: ${imagePath}`)
           }
         }
       }
 
-      // 3-3. public.users からユーザー削除
-      await this.prisma.user.delete({
-        where: { id: userId },
-      })
-      console.log(`User deleted from public.users: ${userId}`)
-
-      // 3-4. auth.users からユーザー削除
+      // 3-3. auth.users からユーザー削除（public.usersは on_auth_user_deleted トリガーで自動削除）
       const { error: deleteAuthError } = await this.supabaseAdmin.auth.admin.deleteUser(userId)
 
       if (deleteAuthError) {
-        console.error('Auth user deletion error:', deleteAuthError)
-        throw new InternalServerErrorException('アカウントの削除に失敗しました（auth.users）')
+        this.logger.error('Auth user deletion error:', deleteAuthError)
+        throw new InternalServerErrorException('アカウントの削除に失敗しました')
       }
-      console.log(`User deleted from auth.users: ${userId}`)
+      this.logger.log(
+        `User deleted from auth.users: ${userId} (public.users also deleted by trigger)`,
+      )
 
       // 4. 成功ログ
-      console.log(`Account deleted successfully for user: ${userId}`)
+      this.logger.log(`Account deleted successfully for user: ${userId}`)
     } catch (error) {
       // エラーが既にNestJSの例外の場合はそのまま再スロー
       if (
@@ -352,7 +347,7 @@ export class UsersService {
         }
       }
       // その他のエラー
-      console.error('Unexpected error during account deletion:', error)
+      this.logger.error('Unexpected error during account deletion:', error)
       throw new InternalServerErrorException('アカウント削除中に予期しないエラーが発生しました')
     }
   }

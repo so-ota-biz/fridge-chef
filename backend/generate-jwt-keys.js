@@ -1,18 +1,25 @@
 const jwt = require('jsonwebtoken')
 
-const jwtSecret = 'EXL55h1If1V4Ivw4RDXvKTNVzck2tjtOVRtsLjU0AS8='
+// 環境変数からJWTシークレットを取得（必須）
+const jwtSecret = process.env.SUPABASE_JWT_SECRET
+if (!jwtSecret) {
+  throw new Error('SUPABASE_JWT_SECRET environment variable is required')
+}
+
+// 現在時刻から1年後の有効期限を設定
+const oneYearFromNow = Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60
 
 const anonPayload = {
   iss: 'supabase-demo',
   role: 'anon',
-  exp: 1983812996,
+  exp: oneYearFromNow,
   iat: Math.floor(Date.now() / 1000),
 }
 
 const serviceRolePayload = {
   iss: 'supabase-demo',
   role: 'service_role',
-  exp: 1983812996,
+  exp: oneYearFromNow,
   iat: Math.floor(Date.now() / 1000),
 }
 

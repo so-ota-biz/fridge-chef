@@ -14,6 +14,7 @@ import { SignInDto } from '@/auth/dto/sign-in.dto'
 import { SignUpResponseDto } from '@/auth/dto/sign-up-response.dto'
 import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
 import { Database } from '@/types/database.types'
+import { JwtPayload } from '@/auth/types/jwt-payload.type'
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name)
@@ -176,27 +177,32 @@ export class AuthService {
   /**
    * トークンリフレッシュ
    */
-  async refreshToken(userId: string): Promise<{ accessToken: string }> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { id: true },
-    })
+  async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
+    try {
+      // リフレッシュトークンを検証
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken)
+      const userId = payload.sub
+      const email = payload.email
 
-    if (!user) {
-      throw new UnauthorizedException('User not found')
+      // ユーザーの存在確認
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true },
+      })
+
+      if (!user) {
+        throw new UnauthorizedException('User not found')
+      }
+
+      // 新しいアクセストークンを生成
+      const newPayload: JwtPayload = { sub: userId, email }
+      const accessToken = await this.jwtService.signAsync(newPayload)
+
+      return { accessToken }
+    } catch (error) {
+      this.logger.error('Refresh token verification failed:', error)
+      throw new UnauthorizedException('Invalid refresh token')
     }
-
-    // auth.usersからemailを取得
-    const { data: authData, error } = await this.supabaseAdmin.auth.admin.getUserById(userId)
-
-    if (error || !authData?.user?.email) {
-      throw new UnauthorizedException('Failed to fetch user email')
-    }
-
-    const payload = { sub: userId, email: authData.user.email }
-    const accessToken = await this.jwtService.signAsync(payload)
-
-    return { accessToken }
   }
 
   /**
@@ -206,7 +212,7 @@ export class AuthService {
     userId: string,
     email: string,
   ): Promise<{ accessToken: string; refreshToken: string }> {
-    const payload = { sub: userId, email }
+    const payload: JwtPayload = { sub: userId, email }
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload),

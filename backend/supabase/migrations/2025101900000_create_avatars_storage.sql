@@ -2,6 +2,12 @@
 -- Create avatars bucket for user images
 -- ===================================================
 
+-- 既存ポリシーを削除（冪等性確保のため）
+DROP POLICY IF EXISTS "Public read access for avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated users can upload avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Users can update their own avatars" ON storage.objects;
+DROP POLICY IF EXISTS "Users can delete their own avatars" ON storage.objects;
+
 -- バケット作成（公開バケット）
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES (
