@@ -22,16 +22,16 @@ export class AuthService {
 
   private get supabaseAdmin(): SupabaseClient<Database> {
     if (!this._supabaseAdmin) {
-      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const supabaseUrl = this.configService.get<string>('SUPABASE_URL')
+      const supabaseServiceRoleKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY')
+
+      if (!supabaseUrl || !supabaseServiceRoleKey) {
         this.logger.error('Supabase configuration is missing at AuthService')
         throw new InternalServerErrorException('Supabase configuration is missing at AuthService')
       }
 
       this.logger.log('Initializing Supabase client...at AuthService')
-      this._supabaseAdmin = createClient<Database>(
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY,
-      )
+      this._supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceRoleKey)
       this.logger.log('Supabase client initialized at AuthService')
     }
     return this._supabaseAdmin
