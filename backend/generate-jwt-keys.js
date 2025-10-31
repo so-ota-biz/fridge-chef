@@ -1,3 +1,4 @@
+require('dotenv').config()
 const jwt = require('jsonwebtoken')
 
 // 環境変数からJWTシークレットを取得（必須）

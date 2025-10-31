@@ -4,6 +4,7 @@ import {
   NotFoundException,
   InternalServerErrorException,
   Logger,
+  BadRequestException,
 } from '@nestjs/common'
 import { PrismaService } from '@/prisma/prisma.service'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
@@ -14,7 +15,6 @@ import { User, UpdateUserResponse } from './types/user.type'
 import { UploadAvatarResponse } from './types/upload-avatar.type'
 import * as path from 'path'
 import { v4 as uuidv4 } from 'uuid'
-import { BadRequestException } from '@nestjs/common'
 import { Prisma } from '@prisma/client'
 
 @Injectable()
@@ -24,16 +24,16 @@ export class UsersService {
 
   private get supabaseAdmin(): SupabaseClient<Database> {
     if (!this._supabaseAdmin) {
-      if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const supabaseUrl = this.configService.get<string>('SUPABASE_URL')
+      const supabaseServiceRoleKey = this.configService.get<string>('SUPABASE_SERVICE_ROLE_KEY')
+
+      if (!supabaseUrl || !supabaseServiceRoleKey) {
         this.logger.error('Supabase configuration is missing at UsersService')
         throw new InternalServerErrorException('Supabase configuration is missing at UsersService')
       }
 
       this.logger.log('Initializing Supabase client...at UsersService')
-      this._supabaseAdmin = createClient<Database>(
-        process.env.SUPABASE_URL,
-        process.env.SUPABASE_SERVICE_ROLE_KEY,
-      )
+      this._supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceRoleKey)
       this.logger.log('Supabase client initialized at UsersService')
     }
     return this._supabaseAdmin
@@ -71,7 +71,7 @@ export class UsersService {
 
     return {
       ...user,
-      email: authData?.user?.email ?? null,
+      email: authData.user.email,
     }
   }
 
@@ -242,7 +242,7 @@ export class UsersService {
       throw new UnauthorizedException('現在のパスワードが正しくありません')
     }
 
-    // STEP3. 新しいパスワードに更新
+    // STEP4. 新しいパスワードに更新
     const { error: updateError } = await this.supabaseAdmin.auth.admin.updateUserById(userId, {
       password: newPassword,
     })

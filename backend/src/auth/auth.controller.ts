@@ -15,16 +15,7 @@ import { SignUpResponseDto } from '@/auth/dto/sign-up-response.dto'
 import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
 import { RefreshTokenDto } from '@/auth/dto/refresh-token.dto'
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
-
-// リクエストにユーザー情報が含まれる型定義
-interface RequestWithUser extends Request {
-  user: {
-    id: string
-    email: string
-    displayName: string | null
-    avatarUrl: string | null
-  }
-}
+import type { RequestWithUser } from '@/auth/types/request-with-user.type'
 
 @Controller('auth')
 export class AuthController {
