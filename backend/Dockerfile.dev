@@ -1,0 +1,22 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# package.json と package-lock.json をコピー
+COPY package*.json ./
+
+# 依存関係をインストール
+RUN npm ci
+
+# Prisma をコピーして生成
+COPY prisma ./prisma/
+RUN npx prisma generate
+
+# アプリケーションコードをコピー
+COPY . .
+
+# ポート公開
+EXPOSE 3000
+
+# 開発サーバー起動
+CMD ["npm", "run", "start:dev"]

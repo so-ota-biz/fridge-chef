@@ -1,0 +1,11 @@
+# Keep environment variables out of version control
+.env
+
+**/.vscode/
+
+# compiled output
+dist/
+node_modules/
+build/
+.next/
+**/generated/prisma/
