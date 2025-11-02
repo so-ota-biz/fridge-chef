@@ -13,6 +13,7 @@ import { SignUpDto } from '@/auth/dto/sign-up.dto'
 import { SignInDto } from '@/auth/dto/sign-in.dto'
 import { SignUpResponseDto } from '@/auth/dto/sign-up-response.dto'
 import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
+import { RefreshTokenResponseDto } from '@/auth/dto/refresh-token-response.dto'
 import { Database } from '@/types/database.types'
 import { JwtPayload } from '@/auth/types/jwt-payload.type'
 @Injectable()
@@ -177,7 +178,7 @@ export class AuthService {
   /**
    * トークンリフレッシュ
    */
-  async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponseDto> {
     try {
       // リフレッシュトークンを検証
       const payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken)
@@ -194,11 +195,10 @@ export class AuthService {
         throw new UnauthorizedException('User not found')
       }
 
-      // 新しいアクセストークンを生成
-      const newPayload: JwtPayload = { sub: userId, email }
-      const accessToken = await this.jwtService.signAsync(newPayload)
+      // 新しいアクセストークンとリフレッシュトークンを両方生成（Refresh Token Rotation）
+      const tokens = await this.generateTokens(userId, email)
 
-      return { accessToken }
+      return tokens
     } catch (error) {
       this.logger.error('Refresh token verification failed:', error)
       throw new UnauthorizedException('Invalid refresh token')
