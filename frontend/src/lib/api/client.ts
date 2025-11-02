@@ -85,7 +85,21 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // 401以外のエラーはそのまま返す
+    // 401以外のエラー: バックエンドのメッセージがあれば差し替えて返す
+    try {
+      const data = (error.response?.data ?? {}) as { message?: string | string[]; error?: string }
+      let backendMessage: string | undefined
+      if (typeof data.message === 'string') backendMessage = data.message
+      else if (Array.isArray(data.message) && data.message.length > 0) backendMessage = data.message[0]
+      else if (typeof data.error === 'string') backendMessage = data.error
+
+      if (backendMessage) {
+        error.message = backendMessage
+      }
+    } catch {
+      // 解析に失敗した場合は何もしない（既定のメッセージを利用）
+    }
+
     return Promise.reject(error)
   },
 )
