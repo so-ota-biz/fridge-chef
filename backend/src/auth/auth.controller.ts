@@ -14,6 +14,7 @@ import { SignInDto } from '@/auth/dto/sign-in.dto'
 import { SignUpResponseDto } from '@/auth/dto/sign-up-response.dto'
 import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
 import { RefreshTokenDto } from '@/auth/dto/refresh-token.dto'
+import { RefreshTokenResponseDto } from '@/auth/dto/refresh-token-response.dto'
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
 import type { RequestWithUser } from '@/auth/types/request-with-user.type'
 
@@ -47,7 +48,7 @@ export class AuthController {
    */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto): Promise<{ accessToken: string }> {
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponseDto> {
     return this.authService.refreshToken(refreshTokenDto.refreshToken)
   }
 
