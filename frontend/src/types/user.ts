@@ -1,5 +1,8 @@
+// ========================================
+// 基本のユーザー型（public.users + auth.users.email）
+// ========================================
 /**
- * ユーザー情報
+ * ユーザー情報（完全版）
  */
 export interface User {
   id: string
@@ -11,6 +14,14 @@ export interface User {
   createdAt: string
   updatedAt: string
 }
+
+// ========================================
+// 認証エンドポイント用のユーザー型（派生型）
+// ========================================
+/**
+ * 認証エンドポイントで返されるユーザー情報（基本情報のみ）
+ */
+export type AuthUser = Pick<User, 'id' | 'email' | 'displayName' | 'avatarUrl'>
 
 /**
  * ユーザー情報更新リクエスト

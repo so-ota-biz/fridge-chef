@@ -1,3 +1,5 @@
+import type { AuthUser } from './user'
+
 /**
  * サインアップリクエスト
  */
@@ -11,12 +13,7 @@ export interface SignUpRequest {
  * サインアップレスポンス
  */
 export interface SignUpResponse {
-  user: {
-    id: string
-    email: string
-    displayName: string
-    avatarUrl: string | null
-  }
+  user: AuthUser
   message: string
 }
 
@@ -32,14 +29,9 @@ export interface SignInRequest {
  * サインインレスポンス
  */
 export interface SignInResponse {
+  user: AuthUser
   accessToken: string
   refreshToken: string
-  user: {
-    id: string
-    email: string
-    displayName: string
-    avatarUrl: string | null
-  }
 }
 
 /**
@@ -54,6 +46,7 @@ export interface RefreshTokenRequest {
  */
 export interface RefreshTokenResponse {
   accessToken: string
+  refreshToken: string
 }
 
 /**

@@ -1,20 +1,20 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { User } from '@/types/user'
+import type { AuthUser } from '@/types/user'
 
 // ========================================
 // 状態とアクションの型定義
 // ========================================
 interface AuthState {
   // 状態
-  user: User | null
+  user: AuthUser | null
   accessToken: string | null
   refreshToken: string | null
   isAuthenticated: boolean
 
   // アクション
-  setAuth: (user: User, accessToken: string, refreshToken: string) => void
-  setUser: (user: User) => void
+  setAuth: (user: AuthUser, accessToken: string, refreshToken: string) => void
+  setUser: (user: AuthUser) => void
   updateTokens: (accessToken: string, refreshToken?: string) => void
   clearAuth: () => void
 }
