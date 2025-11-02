@@ -15,7 +15,7 @@ import {
   Stack,
 } from '@mantine/core'
 import Link from 'next/link'
-import { useSignUp } from '@/lib/hooks'
+import { useSignUp, useNavigationLoading } from '@/lib/hooks'
 
 // ========================================
 // バリデーションスキーマ
@@ -44,6 +44,7 @@ type SignUpFormValues = z.infer<typeof signUpSchema>
 // ========================================
 export default function SignUpPage() {
   const signUpMutation = useSignUp()
+  const { isNavigating, withNavigation } = useNavigationLoading()
 
   const {
     register,
@@ -55,11 +56,13 @@ export default function SignUpPage() {
 
   const onSubmit = async (data: SignUpFormValues) => {
     try {
-      await signUpMutation.mutateAsync({
-        email: data.email,
-        password: data.password,
-        displayName: data.displayName,
-      })
+      await withNavigation(() =>
+        signUpMutation.mutateAsync({
+          email: data.email,
+          password: data.password,
+          displayName: data.displayName,
+        }),
+      )
       // 成功時は自動的にサインインページにリダイレクトされる
     } catch (error: unknown) {
       // エラーは useMutation 内で自動的に管理される
@@ -122,7 +125,11 @@ export default function SignUpPage() {
               </Text>
             )}
 
-            <Button type="submit" fullWidth loading={isSubmitting || signUpMutation.isPending}>
+            <Button
+              type="submit"
+              fullWidth
+              loading={isSubmitting || signUpMutation.isPending || isNavigating}
+            >
               新規登録
             </Button>
           </Stack>

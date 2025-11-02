@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useSearchParams } from 'next/navigation'
+// no local state needed; handled by navigation hook
 import {
   Container,
   Paper,
@@ -18,7 +19,7 @@ import {
 } from '@mantine/core'
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-import { useSignIn } from '@/lib/hooks'
+import { useSignIn, useNavigationLoading } from '@/lib/hooks'
 
 // ========================================
 // バリデーションスキーマ
@@ -37,6 +38,7 @@ export default function SignInPage() {
   const searchParams = useSearchParams()
   const signupSuccess = searchParams.get('signup') === 'success'
   const signInMutation = useSignIn()
+  const { isNavigating: isNav, withNavigation } = useNavigationLoading()
 
   const {
     register,
@@ -48,10 +50,12 @@ export default function SignInPage() {
 
   const onSubmit = async (data: SignInFormValues) => {
     try {
-      await signInMutation.mutateAsync({
-        email: data.email,
-        password: data.password,
-      })
+      await withNavigation(() =>
+        signInMutation.mutateAsync({
+          email: data.email,
+          password: data.password,
+        }),
+      )
       // 成功時は自動的にダッシュボードにリダイレクトされる
     } catch (error: unknown) {
       if (error instanceof Error) {
@@ -114,7 +118,11 @@ export default function SignInPage() {
               </Text>
             )}
 
-            <Button type="submit" fullWidth loading={isSubmitting || signInMutation.isPending}>
+            <Button
+              type="submit"
+              fullWidth
+              loading={isSubmitting || signInMutation.isPending || isNav}
+            >
               ログイン
             </Button>
           </Stack>
