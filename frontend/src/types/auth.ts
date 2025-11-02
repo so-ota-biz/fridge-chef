@@ -6,7 +6,7 @@ import type { AuthUser } from './user'
 export interface SignUpRequest {
   email: string
   password: string
-  displayName: string
+  displayName?: string
 }
 
 /**

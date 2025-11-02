@@ -1,66 +1,55 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client'
 
-export default function Home() {
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Container, Title, Text, Button, Stack, Center, Loader } from '@mantine/core'
+import { useAuth } from '@/lib/hooks'
+
+export default function HomePage() {
+  const router = useRouter()
+  const { isAuthenticated } = useAuth()
+
+  useEffect(() => {
+    // 認証済みの場合はダッシュボードにリダイレクト
+    if (isAuthenticated) {
+      router.push('/dashboard')
+    }
+  }, [isAuthenticated, router])
+
+  // 認証チェック中はローディング表示
+  if (isAuthenticated) {
+    return (
+      <Center h="100vh">
+        <Loader size="xl" />
+      </Center>
+    )
+  }
+
+  // 未認証時のランディングページ
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>To get started, edit the page.tsx file.</h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    <Container size="md" style={{ marginTop: '10vh' }}>
+      <Stack align="center" gap="xl">
+        <Title order={1} size="3rem" ta="center">
+          {process.env.NEXT_PUBLIC_APP_NAME || 'FridgeChef'}
+        </Title>
+
+        <Text size="xl" ta="center" c="dimmed">
+          冷蔵庫にある食材から最適な料理を提案
+        </Text>
+
+        <Text size="lg" ta="center" c="dimmed">
+          AIがあなたの冷蔵庫の食材から、おいしいレシピを提案します
+        </Text>
+
+        <Stack gap="md" mt="xl">
+          <Button size="lg" onClick={() => router.push('/auth/signup')}>
+            今すぐ始める
+          </Button>
+          <Button size="lg" variant="outline" onClick={() => router.push('/auth/signin')}>
+            ログイン
+          </Button>
+        </Stack>
+      </Stack>
+    </Container>
+  )
 }
