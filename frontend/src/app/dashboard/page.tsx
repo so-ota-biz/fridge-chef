@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Container, Title, Text, Button, Stack, Center, Loader, Paper } from '@mantine/core'
