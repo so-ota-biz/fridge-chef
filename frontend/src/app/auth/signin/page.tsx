@@ -33,7 +33,7 @@ type SignInFormValues = z.infer<typeof signInSchema>
 // ========================================
 // サインインページコンポーネント
 // ========================================
-export default function SignInPage() {
+const SignInPage = () => {
   const searchParams = useSearchParams()
   const signupSuccess = searchParams.get('signup') === 'success'
   const signInMutation = useSignIn()
@@ -127,3 +127,5 @@ export default function SignInPage() {
     </Container>
   )
 }
+
+export default SignInPage

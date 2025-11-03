@@ -6,7 +6,7 @@ import { Container, Title, Text, Button, Stack, Center, Loader, Paper } from '@m
 import { useAuth, useSignOut } from '@/lib/hooks'
 import { useAuthStore } from '@/lib/store'
 
-export default function DashboardPage() {
+const DashboardPage = () => {
   const router = useRouter()
   const { user, isAuthenticated } = useAuth()
   const signOut = useSignOut()
@@ -79,3 +79,5 @@ export default function DashboardPage() {
     </Container>
   )
 }
+
+export default DashboardPage

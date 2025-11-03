@@ -5,7 +5,7 @@ import { theme } from '@/styles/theme'
 import { useAuthStore } from '@/lib/store'
 
 // 認証状態復元コンポーネント
-function AuthRestorer({ children }: { children: React.ReactNode }) {
+const AuthRestorer = ({ children }: { children: React.ReactNode }) => {
   const restoreAuth = useAuthStore((state) => state.restoreAuth)
 
   useEffect(() => {
@@ -16,7 +16,7 @@ function AuthRestorer({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export const Providers = ({ children }: { children: React.ReactNode }) => {
   const [queryClient] = useState(
     () =>
       new QueryClient({

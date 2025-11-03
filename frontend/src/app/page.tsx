@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Container, Title, Text, Button, Stack, Center, Loader } from '@mantine/core'
 import { useAuth } from '@/lib/hooks'
 
-export default function HomePage() {
+const HomePage = () => {
   const router = useRouter()
   const { isAuthenticated } = useAuth()
 
@@ -53,3 +53,5 @@ export default function HomePage() {
     </Container>
   )
 }
+
+export default HomePage

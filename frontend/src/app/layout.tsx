@@ -4,7 +4,7 @@ import '@mantine/core/styles.css'
 import { useEffect } from 'react'
 import { Providers } from './providers'
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+const RootLayout = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const title = 'FridgeChef - AI料理アシスタント'
     const description = '冷蔵庫の食材から最適な料理を提案するAI料理アシスタント'
@@ -32,3 +32,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     </html>
   )
 }
+
+export default RootLayout

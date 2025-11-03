@@ -42,7 +42,7 @@ type SignUpFormValues = z.infer<typeof signUpSchema>
 // ========================================
 // サインアップページコンポーネント
 // ========================================
-export default function SignUpPage() {
+const SignUpPage = () => {
   const signUpMutation = useSignUp()
   const { isNavigating, withNavigation } = useNavigationLoading()
 
@@ -138,3 +138,5 @@ export default function SignUpPage() {
     </Container>
   )
 }
+
+export default SignUpPage
