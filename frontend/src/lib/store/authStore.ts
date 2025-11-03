@@ -13,6 +13,7 @@ interface AuthState {
   accessToken: string | null
   refreshToken: string | null
   isAuthenticated: boolean
+  isAuthRestored: boolean
 
   // アクション
   setAuth: (user: AuthUser, accessToken: string, refreshToken: string) => void
@@ -35,6 +36,7 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
+      isAuthRestored: false,
 
       // --------------------
       // アクション: ログイン時に全ての認証情報をセット
@@ -50,6 +52,7 @@ export const useAuthStore = create<AuthState>()(
           accessToken,
           refreshToken,
           isAuthenticated: true,
+          isAuthRestored: true,
         })
       },
 
@@ -93,6 +96,7 @@ export const useAuthStore = create<AuthState>()(
           accessToken: null,
           refreshToken: null,
           isAuthenticated: false,
+          isAuthRestored: true, // クリア処理も「復元完了」とみなす
         })
       },
 
@@ -110,6 +114,11 @@ export const useAuthStore = create<AuthState>()(
             accessToken,
             refreshToken,
             isAuthenticated: true,
+            isAuthRestored: true,
+          })
+        } else {
+          set({
+            isAuthRestored: true, // 復元試行完了をマーク
           })
         }
       },

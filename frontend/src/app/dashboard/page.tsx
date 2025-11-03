@@ -4,21 +4,23 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Container, Title, Text, Button, Stack, Center, Loader, Paper } from '@mantine/core'
 import { useAuth, useSignOut } from '@/lib/hooks'
+import { useAuthStore } from '@/lib/store'
 
 export default function DashboardPage() {
   const router = useRouter()
   const { user, isAuthenticated } = useAuth()
   const signOut = useSignOut()
+  const isAuthRestored = useAuthStore((state) => state.isAuthRestored)
 
   useEffect(() => {
-    // 未認証の場合はサインインページにリダイレクト
-    if (!isAuthenticated) {
+    // 認証復元が完了してから認証チェックを実行
+    if (isAuthRestored && !isAuthenticated) {
       router.push('/auth/signin')
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, isAuthRestored, router])
 
-  // 認証チェック中はローディング表示
-  if (!isAuthenticated) {
+  // 認証復元中またはチェック中はローディング表示
+  if (!isAuthRestored || !isAuthenticated) {
     return (
       <Center h="100vh">
         <Loader size="xl" />
