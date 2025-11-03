@@ -19,6 +19,7 @@ interface AuthState {
   setUser: (user: AuthUser) => void
   updateTokens: (accessToken: string, refreshToken?: string) => void
   clearAuth: () => void
+  restoreAuth: () => void
 }
 
 // ========================================
@@ -26,7 +27,7 @@ interface AuthState {
 // ========================================
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // --------------------
       // 初期状態
       // --------------------
@@ -93,6 +94,24 @@ export const useAuthStore = create<AuthState>()(
           refreshToken: null,
           isAuthenticated: false,
         })
+      },
+
+      // --------------------
+      // アクション: ローカルストレージから認証状態を復元
+      // --------------------
+      restoreAuth: () => {
+        const accessToken = localStorage.getItem('accessToken')
+        const refreshToken = localStorage.getItem('refreshToken')
+        const currentState = get()
+
+        // トークンが存在し、ユーザー情報もある場合は認証状態を復元
+        if (accessToken && refreshToken && currentState.user) {
+          set({
+            accessToken,
+            refreshToken,
+            isAuthenticated: true,
+          })
+        }
       },
     }),
     {

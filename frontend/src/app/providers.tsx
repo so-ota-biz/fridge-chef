@@ -1,7 +1,20 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { theme } from '@/styles/theme'
+import { useAuthStore } from '@/lib/store'
+
+// 認証状態復元コンポーネント
+function AuthRestorer({ children }: { children: React.ReactNode }) {
+  const restoreAuth = useAuthStore((state) => state.restoreAuth)
+
+  useEffect(() => {
+    // アプリケーション初期化時に認証状態を復元
+    restoreAuth()
+  }, [restoreAuth])
+
+  return <>{children}</>
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -18,7 +31,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <MantineProvider theme={theme}>{children}</MantineProvider>
+      <MantineProvider theme={theme}>
+        <AuthRestorer>{children}</AuthRestorer>
+      </MantineProvider>
     </QueryClientProvider>
   )
 }
