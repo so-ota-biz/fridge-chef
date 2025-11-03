@@ -1,10 +1,7 @@
-'use client'
-
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { useSearchParams } from 'next/navigation'
-// no local state needed; handled by navigation hook
 import {
   Container,
   Paper,
@@ -58,11 +55,8 @@ export default function SignInPage() {
       )
       // 成功時は自動的にダッシュボードにリダイレクトされる
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        console.error('サインインエラー:', error.message)
-      } else {
-        console.error('予期しないエラー:', error)
-      }
+      // エラーは useMutation 内で自動的に管理される
+      console.error('サインインエラー:', error)
     }
   }
 

@@ -42,6 +42,11 @@ apiClient.interceptors.response.use(
 
     // 401エラー（認証エラー）かつ、まだリトライしていない場合
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // サインインリクエスト時は401エラーでもリダイレクトしない
+      if (originalRequest.url?.includes('/auth/signin')) {
+        return Promise.reject(error)
+      }
+
       // リトライフラグを立てる（トークンリフレッシュ後、元のリクエストが再び401を返した場合の無限ループを防ぐ）
       originalRequest._retry = true
 
