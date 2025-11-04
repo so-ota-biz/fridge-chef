@@ -2,15 +2,18 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Container, Title, Text, Button, Stack, Center, Loader, Paper } from '@mantine/core'
-import { useAuth, useSignOut } from '@/lib/hooks'
+import { AppShell, Container, Title, Text, Stack, Center, Loader, Paper } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
+import { useAuth } from '@/lib/hooks'
 import { useAuthStore } from '@/lib/store'
+import { Header } from '@/components/layout/Header'
+import { Navbar } from '@/components/layout/Navbar'
 
 const DashboardPage = () => {
   const router = useRouter()
   const { user, isAuthenticated } = useAuth()
-  const signOut = useSignOut()
   const isAuthRestored = useAuthStore((state) => state.isAuthRestored)
+  const [opened, { toggle }] = useDisclosure()
 
   useEffect(() => {
     // 認証復元が完了してから認証チェックを実行
@@ -29,54 +32,70 @@ const DashboardPage = () => {
   }
 
   return (
-    <Container size="md" mt="xl">
-      <Stack gap="xl">
-        <Title order={1}>ダッシュボード（仮）</Title>
+    <AppShell
+      header={{ height: 60 }}
+      navbar={{
+        width: 300,
+        breakpoint: 'sm',
+        collapsed: { mobile: !opened },
+      }}
+      padding="md"
+    >
+      <AppShell.Header>
+        <Header opened={opened} toggle={toggle} />
+      </AppShell.Header>
 
-        <Paper withBorder shadow="sm" p="xl" radius="md">
-          <Stack gap="md">
-            <Text size="lg" fw={500}>
-              ログイン情報
-            </Text>
+      <AppShell.Navbar p="md">
+        <Navbar opened={opened} />
+      </AppShell.Navbar>
 
-            <div>
+      <AppShell.Main>
+        <Container size="md" mt="xl">
+          <Stack gap="xl">
+            <Title order={1}>ダッシュボード（仮）</Title>
+
+            <Paper withBorder shadow="sm" p="xl" radius="md">
+              <Stack gap="md">
+                <Text size="lg" fw={500}>
+                  ログイン情報
+                </Text>
+
+                <div>
+                  <Text size="sm" c="dimmed">
+                    メールアドレス
+                  </Text>
+                  <Text size="md">{user?.email}</Text>
+                </div>
+
+                <div>
+                  <Text size="sm" c="dimmed">
+                    表示名
+                  </Text>
+                  <Text size="md">{user?.displayName || '未設定'}</Text>
+                </div>
+
+                <div>
+                  <Text size="sm" c="dimmed">
+                    ユーザーID
+                  </Text>
+                  <Text size="md" style={{ fontFamily: 'monospace', fontSize: '0.9em' }}>
+                    {user?.id}
+                  </Text>
+                </div>
+              </Stack>
+            </Paper>
+
+            <Paper withBorder p="md" radius="md" bg="gray.0">
               <Text size="sm" c="dimmed">
-                メールアドレス
+                ※ これは動作確認用の仮ページです。
+                <br />
+                実際のダッシュボードは後ほど実装します。
               </Text>
-              <Text size="md">{user?.email}</Text>
-            </div>
-
-            <div>
-              <Text size="sm" c="dimmed">
-                表示名
-              </Text>
-              <Text size="md">{user?.displayName || '未設定'}</Text>
-            </div>
-
-            <div>
-              <Text size="sm" c="dimmed">
-                ユーザーID
-              </Text>
-              <Text size="md" style={{ fontFamily: 'monospace', fontSize: '0.9em' }}>
-                {user?.id}
-              </Text>
-            </div>
+            </Paper>
           </Stack>
-        </Paper>
-
-        <Button color="red" onClick={signOut}>
-          ログアウト
-        </Button>
-
-        <Paper withBorder p="md" radius="md" bg="gray.0">
-          <Text size="sm" c="dimmed">
-            ※ これは動作確認用の仮ページです。
-            <br />
-            実際のダッシュボードは後ほど実装します。
-          </Text>
-        </Paper>
-      </Stack>
-    </Container>
+        </Container>
+      </AppShell.Main>
+    </AppShell>
   )
 }
 
