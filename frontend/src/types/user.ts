@@ -6,7 +6,7 @@
  */
 export interface User {
   id: string
-  email: string
+  email: string | null
   displayName: string | null
   firstName: string | null
   lastName: string | null

@@ -62,7 +62,8 @@ apiClient.interceptors.response.use(
         }
 
         // トークンリフレッシュAPIを呼び出し（無限ループを防ぐため、apiClientは使わない）
-        const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
+        const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+        const response = await axios.post(`${baseURL}/auth/refresh`, {
           refreshToken,
         })
 

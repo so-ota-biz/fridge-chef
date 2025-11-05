@@ -55,6 +55,6 @@ export interface RefreshTokenResponse {
 export interface AuthMeResponse {
   id: string
   email: string
-  displayName: string
+  displayName: string | null
   avatarUrl: string | null
 }
