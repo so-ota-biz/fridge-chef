@@ -48,7 +48,6 @@ export const MainLayout = ({ children, showNavbar = true, showFooter = true }: M
             }
           : undefined
       }
-      footer={showFooter ? { height: 60 } : undefined}
       padding="md"
     >
       <AppShell.Header>
