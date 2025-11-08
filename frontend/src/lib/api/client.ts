@@ -5,9 +5,25 @@ type AuthEventDetail = {
   refreshToken?: string | null
 }
 
+const isBrowser = () => typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
+
 const emitAuthEvent = (type: 'auth:expired' | 'auth:tokens-updated', detail?: AuthEventDetail) => {
-  if (typeof window === 'undefined') return
+  if (!isBrowser()) return
   window.dispatchEvent(new CustomEvent(type, { detail }))
+}
+
+const safeStorage = {
+  getItem: (key: string) => (isBrowser() ? window.localStorage.getItem(key) : null),
+  setItem: (key: string, value: string) => {
+    if (isBrowser()) {
+      window.localStorage.setItem(key, value)
+    }
+  },
+  removeItem: (key: string) => {
+    if (isBrowser()) {
+      window.localStorage.removeItem(key)
+    }
+  },
 }
 
 // APIクライアントのインスタンスを作成
@@ -25,7 +41,7 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     // ローカルストレージからアクセストークンを取得
-    const token = localStorage.getItem('accessToken')
+    const token = safeStorage.getItem('accessToken')
 
     // トークンが存在する場合、Authorizationヘッダーに追加
     if (token && config.headers) {
@@ -57,16 +73,20 @@ apiClient.interceptors.response.use(
         return Promise.reject(error)
       }
 
+      if (!isBrowser()) {
+        return Promise.reject(error)
+      }
+
       // リトライフラグを立てる（トークンリフレッシュ後、元のリクエストが再び401を返した場合の無限ループを防ぐ）
       originalRequest._retry = true
 
       try {
-        const refreshToken = localStorage.getItem('refreshToken')
+        const refreshToken = safeStorage.getItem('refreshToken')
 
         // リフレッシュトークンがない場合はログアウト処理
         if (!refreshToken) {
-          localStorage.removeItem('accessToken')
-          localStorage.removeItem('refreshToken')
+          safeStorage.removeItem('accessToken')
+          safeStorage.removeItem('refreshToken')
           emitAuthEvent('auth:expired')
           return Promise.reject(error)
         }
@@ -80,9 +100,9 @@ apiClient.interceptors.response.use(
         const { accessToken, refreshToken: newRefreshToken } = response.data
 
         // 新しいトークンをローカルストレージに保存
-        localStorage.setItem('accessToken', accessToken)
+        safeStorage.setItem('accessToken', accessToken)
         if (newRefreshToken) {
-          localStorage.setItem('refreshToken', newRefreshToken)
+          safeStorage.setItem('refreshToken', newRefreshToken)
         }
 
         // 元のリクエストのAuthorizationヘッダーを更新
@@ -96,8 +116,8 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest)
       } catch (refreshError) {
         // リフレッシュ失敗時はログアウト
-        localStorage.removeItem('accessToken')
-        localStorage.removeItem('refreshToken')
+        safeStorage.removeItem('accessToken')
+        safeStorage.removeItem('refreshToken')
         emitAuthEvent('auth:expired')
         return Promise.reject(refreshError)
       }

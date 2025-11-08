@@ -17,7 +17,7 @@ export const useSignUp = () => {
 
   return useMutation({
     mutationFn: (data: SignUpRequest) => authApi.signUp(data),
-    onSuccess: (response) => {
+    onSuccess: () => {
       // サインアップ成功後、サインインページにリダイレクト
       // クエリパラメータで成功メッセージを渡す
       router.push('/auth/signin?signup=success')

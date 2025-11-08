@@ -13,7 +13,7 @@ AI が冷蔵庫内の食材から最適なレシピを提案するアプリケ�
 
 ## ディレクトリ構成（抜粋）
 
-```
+```text
 frontend/
 ├─ src/
 │  ├─ app/              # ルーティング（App Router）
@@ -44,15 +44,15 @@ NEXT_PUBLIC_API_URL=http://localhost:3000 # NestJS バックエンドの URL
    npm install
    ```
 
-2. 開発サーバー起動
+2. 開発サーバー起動（バックエンドとポートが重ならないよう 3001 番で起動）
 
    ```bash
-   npm run dev
+   npm run dev -- --port 3001
    ```
 
-3. ブラウザで `http://localhost:3000` を開く
+3. ブラウザで `http://localhost:3001` を開く
 
-バックエンド（`/backend` ディレクトリの NestJS アプリ）をポート 3000 で起動しておくと、認証 API を利用できます。
+バックエンド（`/backend` ディレクトリの NestJS アプリ）はポート 3000 で起動し、`NEXT_PUBLIC_API_URL` で指定した URL（デフォルト: `http://localhost:3000`）を受け付けるようにします。
 
 ```bash
 cd backend
