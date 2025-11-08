@@ -2,7 +2,6 @@
 node_modules/
 
 # ビルド出力
-.next/
 out/
 build/
 dist/

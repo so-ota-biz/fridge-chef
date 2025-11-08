@@ -2,11 +2,7 @@ import { NavLink } from '@mantine/core'
 import { useRouter, usePathname } from 'next/navigation'
 import { HomeIcon, ArchiveBoxIcon, UserCircleIcon } from '@heroicons/react/24/outline'
 
-interface NavbarProps {
-  opened: boolean
-}
-
-export const Navbar = ({ opened }: NavbarProps) => {
+export const Navbar = () => {
   const router = useRouter()
   const pathname = usePathname()
 

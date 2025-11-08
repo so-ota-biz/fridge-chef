@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 
 /**
  * 送信成功後の画面遷移が完了するまでローディングを維持するための軽量フック。
@@ -10,16 +10,29 @@ import { useState, useCallback, useEffect } from 'react'
  */
 export const useNavigationLoading = () => {
   const [isNavigating, setIsNavigating] = useState(false)
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
+  const stopNavigating = useCallback(() => {
+    if (isMountedRef.current) {
+      setIsNavigating(false)
+    }
+  }, [])
 
   const withNavigation = useCallback(async <T>(fn: () => Promise<T>): Promise<T> => {
     setIsNavigating(true)
     try {
       return await fn()
-    } catch (e) {
-      setIsNavigating(false)
-      throw e
+    } finally {
+      stopNavigating()
     }
-  }, [])
+  }, [stopNavigating])
 
   useEffect(() => {
     const handlePopState = () => setIsNavigating(false)
@@ -32,13 +45,6 @@ export const useNavigationLoading = () => {
       window.removeEventListener('pageshow', handlePageShow)
     }
   }, [])
-
-  // フォールバック: 10秒経過で自動解除（想定外パスで残留しないための保険）
-  useEffect(() => {
-    if (!isNavigating) return
-    const timeoutId = window.setTimeout(() => setIsNavigating(false), 10000)
-    return () => window.clearTimeout(timeoutId)
-  }, [isNavigating])
 
   return { isNavigating, withNavigation }
 }

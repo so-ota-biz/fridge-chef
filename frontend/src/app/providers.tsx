@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { theme } from '@/styles/theme'
 import { useAuthStore } from '@/lib/store'
 
@@ -19,6 +20,7 @@ const AuthRestorer = ({ children }: { children: React.ReactNode }) => {
 }
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
+  const router = useRouter()
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -30,6 +32,32 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
         },
       }),
   )
+  const clearAuth = useAuthStore((state) => state.clearAuth)
+  const updateTokens = useAuthStore((state) => state.updateTokens)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const handleAuthExpired = () => {
+      clearAuth()
+      router.push('/auth/signin')
+    }
+
+    const handleTokensUpdated = (event: Event) => {
+      const detail = (event as CustomEvent<{ accessToken: string; refreshToken?: string | null }>).detail
+      if (detail?.accessToken) {
+        updateTokens(detail.accessToken, detail.refreshToken ?? undefined)
+      }
+    }
+
+    window.addEventListener('auth:expired', handleAuthExpired)
+    window.addEventListener('auth:tokens-updated', handleTokensUpdated)
+
+    return () => {
+      window.removeEventListener('auth:expired', handleAuthExpired)
+      window.removeEventListener('auth:tokens-updated', handleTokensUpdated)
+    }
+  }, [clearAuth, router, updateTokens])
 
   return (
     <QueryClientProvider client={queryClient}>

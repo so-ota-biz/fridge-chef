@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## FridgeChef Frontend
 
-## Getting Started
+AI が冷蔵庫内の食材から最適なレシピを提案するアプリケーションのフロントエンドです。Next.js App Router + Mantine + React Query + Zustand で構成し、バックエンド（NestJS）と REST API で連携します。
 
-First, run the development server:
+## 技術スタック
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| 分類 | 内容 |
+| --- | --- |
+| UI | Next.js 16 (App Router), React 19, Mantine UI |
+| 状態管理 | Zustand + react-query |
+| フォーム/バリデーション | react-hook-form + Zod |
+| HTTP | Axios（リフレッシュ対応インターセプター付） |
+
+## ディレクトリ構成（抜粋）
+
+```
+frontend/
+├─ src/
+│  ├─ app/              # ルーティング（App Router）
+│  ├─ components/       # レイアウト/共通コンポーネント
+│  ├─ lib/
+│  │  ├─ api/           # axios クライアント＆API ラッパー
+│  │  ├─ hooks/         # カスタムフック
+│  │  └─ store/         # Zustand ストア
+│  └─ types/            # 共通型定義
+└─ package.json
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 必要な環境変数
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+`.env.local` に最低限以下を設定してください。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+NEXT_PUBLIC_APP_NAME=FridgeChef
+NEXT_PUBLIC_API_URL=http://localhost:3000 # NestJS バックエンドの URL
+```
 
-## Learn More
+## セットアップ
 
-To learn more about Next.js, take a look at the following resources:
+1. 依存関係インストール
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   ```bash
+   cd frontend
+   npm install
+   ```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. 開発サーバー起動
 
-## Deploy on Vercel
+   ```bash
+   npm run dev
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. ブラウザで `http://localhost:3000` を開く
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+バックエンド（`/backend` ディレクトリの NestJS アプリ）をポート 3000 で起動しておくと、認証 API を利用できます。
+
+```bash
+cd backend
+npm install
+npm run start:dev
+```
+
+## 認証フロー
+
+1. `/auth/signup` でメール + パスワード登録
+2. `/auth/signin` でログイン
+3. アクセストークン／リフレッシュトークンは `localStorage` に保存し、axios インターセプターで自動リフレッシュ
+4. Zustand にユーザー情報とトークンを保持し、`MainLayout` で認証ガード
+
+## テスト・Lint
+
+```bash
+npm run lint
+npm run format:check
+```
+
+## デプロイ
+
+`next build` → `next export` により静的ファイルを生成し、S3 + CloudFront などに配置予定です。CSP などのヘッダーはホスティング側（例: CloudFront レスポンスヘッダーポリシー）で設定してください。

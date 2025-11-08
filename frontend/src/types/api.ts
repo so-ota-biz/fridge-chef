@@ -8,11 +8,6 @@ export interface ApiErrorResponse {
 }
 
 /**
- * APIレスポンスの基本型
- */
-export type ApiResponse<T> = T
-
-/**
  * ページネーション情報
  */
 export interface Pagination {

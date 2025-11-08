@@ -1,13 +1,6 @@
 import { apiClient } from './client'
 import axios from 'axios'
-import type {
-  SignUpRequest,
-  SignUpResponse,
-  SignInRequest,
-  SignInResponse,
-  RefreshTokenRequest,
-  RefreshTokenResponse,
-} from '@/types/auth'
+import type { SignUpRequest, SignUpResponse, SignInRequest, SignInResponse } from '@/types/auth'
 
 /**
  * サインアップ
@@ -57,24 +50,4 @@ export const signIn = async (data: SignInRequest): Promise<SignInResponse> => {
         : 'ログインに失敗しました。メールアドレスとパスワードを確認してください。',
     )
   }
-}
-
-/**
- * トークンリフレッシュ
- *
- * ※apiClientのインターセプターが自動的に呼び出す
- */
-export const refreshToken = async (data: RefreshTokenRequest): Promise<RefreshTokenResponse> => {
-  const response = await apiClient.post<RefreshTokenResponse>('/auth/refresh', data)
-  return response.data
-}
-
-/**
- * サインアウト
- *
- */
-export const signOut = (): void => {
-  localStorage.removeItem('accessToken')
-  localStorage.removeItem('refreshToken')
-  window.location.href = '/auth/signin'
 }

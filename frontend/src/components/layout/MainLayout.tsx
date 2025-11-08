@@ -27,8 +27,17 @@ export const MainLayout = ({ children, showNavbar = true, showFooter = true }: M
     }
   }, [isAuthenticated, isAuthRestored, router])
 
-  // 認証復元中またはチェック中はローディング表示
-  if (!isAuthRestored || !isAuthenticated) {
+  // 認証復元中はローディング表示
+  if (!isAuthRestored) {
+    return (
+      <Center h="100vh">
+        <Loader size="xl" />
+      </Center>
+    )
+  }
+
+  // 復元完了後に未認証の場合も、リダイレクト処理中としてローディング表示
+  if (!isAuthenticated) {
     return (
       <Center h="100vh">
         <Loader size="xl" />
@@ -56,7 +65,7 @@ export const MainLayout = ({ children, showNavbar = true, showFooter = true }: M
 
       {showNavbar && (
         <AppShell.Navbar p="md">
-          <Navbar opened={opened} />
+          <Navbar />
         </AppShell.Navbar>
       )}
 

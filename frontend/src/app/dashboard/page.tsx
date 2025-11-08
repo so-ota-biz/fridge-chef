@@ -37,7 +37,13 @@ const DashboardPage = () => {
                 <Text size="sm" c="dimmed">
                   ユーザーID
                 </Text>
-                <Text size="md" style={{ fontFamily: 'monospace', fontSize: '0.9em' }}>
+                <Text
+                  size="md"
+                  sx={{
+                    fontFamily: 'monospace',
+                    fontSize: '0.9em',
+                  }}
+                >
                   {user?.id}
                 </Text>
               </div>

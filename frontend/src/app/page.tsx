@@ -4,10 +4,12 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Container, Title, Text, Button, Stack, Center, Loader } from '@mantine/core'
 import { useAuth } from '@/lib/hooks'
+import { useAuthStore } from '@/lib/store'
 
 const HomePage = () => {
   const router = useRouter()
   const { isAuthenticated } = useAuth()
+  const isAuthRestored = useAuthStore((state) => state.isAuthRestored)
 
   useEffect(() => {
     // 認証済みの場合はダッシュボードにリダイレクト
@@ -16,7 +18,16 @@ const HomePage = () => {
     }
   }, [isAuthenticated, router])
 
-  // 認証チェック中はローディング表示
+  // 認証状態の復元中はローディング表示
+  if (!isAuthRestored) {
+    return (
+      <Center h="100vh">
+        <Loader size="xl" />
+      </Center>
+    )
+  }
+
+  // 認証済みユーザーをダッシュボードへリダイレクトする間はローディング表示
   if (isAuthenticated) {
     return (
       <Center h="100vh">

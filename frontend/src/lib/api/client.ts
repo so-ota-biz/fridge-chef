@@ -1,5 +1,15 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 
+type AuthEventDetail = {
+  accessToken: string
+  refreshToken?: string | null
+}
+
+const emitAuthEvent = (type: 'auth:expired' | 'auth:tokens-updated', detail?: AuthEventDetail) => {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent(type, { detail }))
+}
+
 // APIクライアントのインスタンスを作成
 const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
@@ -57,7 +67,7 @@ apiClient.interceptors.response.use(
         if (!refreshToken) {
           localStorage.removeItem('accessToken')
           localStorage.removeItem('refreshToken')
-          window.location.href = '/auth/signin'
+          emitAuthEvent('auth:expired')
           return Promise.reject(error)
         }
 
@@ -80,13 +90,15 @@ apiClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${accessToken}`
         }
 
+        emitAuthEvent('auth:tokens-updated', { accessToken, refreshToken: newRefreshToken ?? null })
+
         // 元のリクエストを再実行
         return apiClient(originalRequest)
       } catch (refreshError) {
         // リフレッシュ失敗時はログアウト
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
-        window.location.href = '/auth/signin'
+        emitAuthEvent('auth:expired')
         return Promise.reject(refreshError)
       }
     }
