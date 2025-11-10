@@ -21,6 +21,7 @@ import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
 import type { RequestWithUser } from '@/auth/types/request-with-user.type'
 import type { Response, CookieOptions } from 'express'
 import { randomBytes } from 'crypto'
+import { CsrfProtection } from '@/common/decorators/csrf-protection.decorator'
 
 type RequestWithCookies = Request & { cookies?: Record<string, string | undefined> }
 
@@ -39,7 +40,9 @@ export class AuthController {
     const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')
     const sameSite: CookieOptions['sameSite'] = sameSiteEnv === 'none' ? 'none' : 'lax'
     if (sameSite === 'none' && !secure) {
-      this.logger.warn('COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。')
+      this.logger.warn(
+        'COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。',
+      )
       secure = true
     }
     const domain = this.configService.get<string>('COOKIE_DOMAIN') || undefined
@@ -59,7 +62,9 @@ export class AuthController {
     const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')
     const sameSite: CookieOptions['sameSite'] = sameSiteEnv === 'none' ? 'none' : 'lax'
     if (sameSite === 'none' && !secure) {
-      this.logger.warn('COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。')
+      this.logger.warn(
+        'COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。',
+      )
       secure = true
     }
     const domain = this.configService.get<string>('COOKIE_DOMAIN') || undefined
@@ -112,6 +117,7 @@ export class AuthController {
    * POST /auth/refresh
    */
   @Post('refresh')
+  @CsrfProtection()
   @HttpCode(HttpStatus.OK)
   async refreshToken(
     @Request() req: RequestWithCookies,
@@ -138,6 +144,8 @@ export class AuthController {
    * POST /auth/logout
    */
   @Post('logout')
+  @CsrfProtection()
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   logout(@Res({ passthrough: true }) res: Response): void {
     const clearOpts = this.cookieOptions(0)

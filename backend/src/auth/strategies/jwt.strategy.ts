@@ -22,7 +22,7 @@ interface ValidatedUser {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(
-    private readonly config: ConfigService,
+    config: ConfigService,
     private readonly prisma: PrismaService,
   ) {
     const jwtSecret = config.get<string>('JWT_SECRET')
@@ -31,12 +31,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
     super({
       jwtFromRequest: (req: Request): string | null => {
-        const cookiesUnknown = (req as Request & { cookies?: unknown }).cookies
-        if (cookiesUnknown && typeof cookiesUnknown === 'object') {
-          const token: unknown = (cookiesUnknown as Record<string, unknown>).accessToken
-          return typeof token === 'string' && token.length > 0 ? token : null
-        }
-        return null
+        const cookies = req.cookies as { accessToken?: string } | undefined
+        return cookies?.accessToken || null
       },
       ignoreExpiration: false,
       secretOrKey: jwtSecret,

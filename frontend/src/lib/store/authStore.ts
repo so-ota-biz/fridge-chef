@@ -67,6 +67,10 @@ export const useAuthStore = create<AuthState>()(
       restoreAuth: () => {
         ;(async () => {
           try {
+            // まずCSRFトークンを初期化
+            await authApi.initializeCsrf()
+            
+            // 認証状態を確認
             const me = await authApi.getMe()
             const nextUser: AuthUser = {
               id: me.id,
@@ -76,6 +80,8 @@ export const useAuthStore = create<AuthState>()(
             }
             set({ user: nextUser, isAuthenticated: true, isAuthRestored: true })
           } catch {
+            // 認証失敗時もCSRFトークンは確保
+            await authApi.initializeCsrf()
             set({ isAuthRestored: true, isAuthenticated: false, user: null })
           }
         })()

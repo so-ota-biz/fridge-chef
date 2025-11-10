@@ -62,3 +62,13 @@ export const logout = async (): Promise<void> => {
     throw err
   }
 }
+
+/** CSRFトークン初期化（初回アクセス時やトークンが存在しない場合） */
+export const initializeCsrf = async (): Promise<void> => {
+  try {
+    await apiClient.get('/auth/csrf')
+  } catch (err: unknown) {
+    // CSRF初期化の失敗はログに記録するが、アプリの動作は継続
+    console.warn('CSRF token initialization failed:', err)
+  }
+}

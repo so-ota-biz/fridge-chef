@@ -19,7 +19,8 @@ export class CsrfMiddleware implements NestMiddleware {
     // サインインはトークン未発行のため除外
     const path = req.path || req.url || ''
     if (
-      method === 'POST' && (path === '/auth/signin' || path.startsWith('/auth/signin?') || path === '/auth/signin/')
+      method === 'POST' &&
+      (path === '/auth/signin' || path.startsWith('/auth/signin?') || path === '/auth/signin/')
     ) {
       next()
       return
@@ -27,7 +28,8 @@ export class CsrfMiddleware implements NestMiddleware {
 
     const rawHeader = req.headers['x-csrf-token']
     const headerToken = typeof rawHeader === 'string' ? rawHeader : undefined
-    const cookieToken = req.cookies?.csrfToken as string | undefined
+    const cookies = req.cookies as { csrfToken?: string } | undefined
+    const cookieToken = cookies?.csrfToken
 
     if (!headerToken || !cookieToken || headerToken !== cookieToken) {
       throw new ForbiddenException('Invalid CSRF token')
