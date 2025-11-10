@@ -40,7 +40,7 @@ export const useSignIn = () => {
     mutationFn: (data: SignInRequest) => authApi.signIn(data),
     onSuccess: (response) => {
       // 認証情報をストアに保存
-      setAuth(response.user, response.accessToken, response.refreshToken)
+      setAuth(response.user)
 
       // React Queryのキャッシュをクリア（別ユーザーのデータが残っている可能性があるため）
       queryClient.clear()
@@ -63,14 +63,15 @@ export const useSignOut = () => {
   const queryClient = useQueryClient()
 
   return () => {
-    // 認証情報をクリア（localStorage + Zustand）
-    clearAuth()
-
-    // React Queryのキャッシュをクリア
-    queryClient.clear()
-
-    // サインインページにリダイレクト
-    router.push('/auth/signin')
+    // サーバーログアウト→クライアント状態クリア
+    authApi
+      .logout()
+      .catch(() => void 0)
+      .finally(() => {
+        clearAuth()
+        queryClient.clear()
+        router.push('/auth/signin')
+      })
   }
 }
 

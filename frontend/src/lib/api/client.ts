@@ -1,29 +1,10 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 
-type AuthEventDetail = {
-  accessToken: string
-  refreshToken?: string | null
-}
+const isBrowser = () => typeof window !== 'undefined'
 
-const isBrowser = () => typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
-
-const emitAuthEvent = (type: 'auth:expired' | 'auth:tokens-updated', detail?: AuthEventDetail) => {
+const emitAuthExpired = () => {
   if (!isBrowser()) return
-  window.dispatchEvent(new CustomEvent(type, { detail }))
-}
-
-const safeStorage = {
-  getItem: (key: string) => (isBrowser() ? window.localStorage.getItem(key) : null),
-  setItem: (key: string, value: string) => {
-    if (isBrowser()) {
-      window.localStorage.setItem(key, value)
-    }
-  },
-  removeItem: (key: string) => {
-    if (isBrowser()) {
-      window.localStorage.removeItem(key)
-    }
-  },
+  window.dispatchEvent(new CustomEvent('auth:expired'))
 }
 
 // APIクライアントのインスタンスを作成
@@ -33,26 +14,15 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 })
 
 // ========================================
 // リクエストインターセプター
 // ========================================
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    // ローカルストレージからアクセストークンを取得
-    const token = safeStorage.getItem('accessToken')
-
-    // トークンが存在する場合、Authorizationヘッダーに追加
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
-
-    return config
-  },
-  (error: AxiosError) => {
-    return Promise.reject(error)
-  },
+  (config: InternalAxiosRequestConfig) => config,
+  (error: AxiosError) => Promise.reject(error),
 )
 
 // ========================================
@@ -81,44 +51,18 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true
 
       try {
-        const refreshToken = safeStorage.getItem('refreshToken')
-
-        // リフレッシュトークンがない場合はログアウト処理
-        if (!refreshToken) {
-          safeStorage.removeItem('accessToken')
-          safeStorage.removeItem('refreshToken')
-          emitAuthEvent('auth:expired')
-          return Promise.reject(error)
-        }
-
-        // トークンリフレッシュAPIを呼び出し（無限ループを防ぐため、apiClientは使わない）
+        // トークンリフレッシュAPIを呼び出し（インターセプター回避のためaxios直呼び）
         const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-        const response = await axios.post(`${baseURL}/auth/refresh`, {
-          refreshToken,
-        })
-
-        const { accessToken, refreshToken: newRefreshToken } = response.data
-
-        // 新しいトークンをローカルストレージに保存
-        safeStorage.setItem('accessToken', accessToken)
-        if (newRefreshToken) {
-          safeStorage.setItem('refreshToken', newRefreshToken)
-        }
-
-        // 元のリクエストのAuthorizationヘッダーを更新
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`
-        }
-
-        emitAuthEvent('auth:tokens-updated', { accessToken, refreshToken: newRefreshToken ?? null })
-
+        await axios.post(
+          `${baseURL}/auth/refresh`,
+          {},
+          { withCredentials: true, headers: { 'Content-Type': 'application/json' } },
+        )
         // 元のリクエストを再実行
         return apiClient(originalRequest)
       } catch (refreshError) {
-        // リフレッシュ失敗時はログアウト
-        safeStorage.removeItem('accessToken')
-        safeStorage.removeItem('refreshToken')
-        emitAuthEvent('auth:expired')
+        // リフレッシュ失敗時はアプリ側でログアウト誘導
+        emitAuthExpired()
         return Promise.reject(refreshError)
       }
     }

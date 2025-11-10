@@ -43,3 +43,22 @@ export const signIn = async (data: SignInRequest): Promise<SignInResponse> => {
     )
   }
 }
+
+/** 現在のユーザー情報（Cookieで検証） */
+export const getMe = async () => {
+  try {
+    const response = await apiClient.get('/auth/me')
+    return response.data
+  } catch (err: unknown) {
+    throw err
+  }
+}
+
+/** ログアウト（Cookie削除） */
+export const logout = async (): Promise<void> => {
+  try {
+    await apiClient.post('/auth/logout')
+  } catch (err: unknown) {
+    throw err
+  }
+}

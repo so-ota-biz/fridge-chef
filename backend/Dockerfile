@@ -9,6 +9,9 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
+# ネイティブモジュール（bcrypt 等）ビルド用のツールチェーン
+RUN apk add --no-cache python3 make g++
+
 # 依存関係をインストール
 RUN npm ci
 

@@ -13,7 +13,6 @@ import { SignUpDto } from '@/auth/dto/sign-up.dto'
 import { SignInDto } from '@/auth/dto/sign-in.dto'
 import { SignUpResponseDto } from '@/auth/dto/sign-up-response.dto'
 import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
-import { RefreshTokenResponseDto } from '@/auth/dto/refresh-token-response.dto'
 import { Database } from '@/types/database.types'
 import { JwtPayload } from '@/auth/types/jwt-payload.type'
 @Injectable()
@@ -178,7 +177,7 @@ export class AuthService {
   /**
    * トークンリフレッシュ
    */
-  async refreshToken(refreshToken: string): Promise<RefreshTokenResponseDto> {
+  async refreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
     try {
       // リフレッシュトークンを検証
       const payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken)

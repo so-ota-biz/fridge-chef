@@ -7,20 +7,43 @@ import {
   UseGuards,
   Get,
   Request,
+  Res,
+  UnauthorizedException,
 } from '@nestjs/common'
 import { AuthService } from '@/auth/auth.service'
 import { SignUpDto } from '@/auth/dto/sign-up.dto'
 import { SignInDto } from '@/auth/dto/sign-in.dto'
 import { SignUpResponseDto } from '@/auth/dto/sign-up-response.dto'
 import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
-import { RefreshTokenDto } from '@/auth/dto/refresh-token.dto'
-import { RefreshTokenResponseDto } from '@/auth/dto/refresh-token-response.dto'
+import { ConfigService } from '@nestjs/config'
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
 import type { RequestWithUser } from '@/auth/types/request-with-user.type'
+import type { Response, CookieOptions } from 'express'
+
+type RequestWithCookies = Request & { cookies?: Record<string, string | undefined> }
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  private cookieOptions(maxAgeMs: number): CookieOptions {
+    const isProduction = process.env.NODE_ENV === 'production'
+    const secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
+    const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')
+    const sameSite: CookieOptions['sameSite'] = sameSiteEnv === 'none' ? 'none' : 'lax'
+    const domain = this.configService.get<string>('COOKIE_DOMAIN') || undefined
+    return {
+      httpOnly: true,
+      secure,
+      sameSite,
+      domain,
+      path: '/',
+      maxAge: maxAgeMs,
+    }
+  }
 
   /**
    * サインアップ
@@ -38,8 +61,16 @@ export class AuthController {
    */
   @Post('signin')
   @HttpCode(HttpStatus.OK)
-  async signIn(@Body() signInDto: SignInDto): Promise<AuthResponseDto> {
-    return this.authService.signIn(signInDto)
+  async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res: Response): Promise<{ user: AuthResponseDto['user'] }> {
+    const result = await this.authService.signIn(signInDto)
+
+    // アクセス（15分）とリフレッシュ（7日）のCookieを設定
+    const accessMax = 15 * 60 * 1000
+    const refreshMax = 7 * 24 * 60 * 60 * 1000
+    res.cookie('accessToken', result.accessToken, this.cookieOptions(accessMax))
+    res.cookie('refreshToken', result.refreshToken, this.cookieOptions(refreshMax))
+
+    return { user: result.user }
   }
 
   /**
@@ -48,8 +79,31 @@ export class AuthController {
    */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto): Promise<RefreshTokenResponseDto> {
-    return this.authService.refreshToken(refreshTokenDto.refreshToken)
+  async refreshToken(@Request() req: RequestWithCookies, @Res({ passthrough: true }) res: Response): Promise<{ ok: true }>
+  {
+    const refresh = req.cookies?.refreshToken
+    if (!refresh) {
+      throw new UnauthorizedException('Refresh token is missing')
+    }
+    const tokens = await this.authService.refreshToken(refresh)
+
+    const accessMax = 15 * 60 * 1000
+    const refreshMax = 7 * 24 * 60 * 60 * 1000
+    res.cookie('accessToken', tokens.accessToken, this.cookieOptions(accessMax))
+    res.cookie('refreshToken', tokens.refreshToken, this.cookieOptions(refreshMax))
+    return { ok: true }
+  }
+
+  /**
+   * ログアウト
+   * POST /auth/logout
+   */
+  @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async logout(@Res({ passthrough: true }) res: Response): Promise<void> {
+    const clearOpts = this.cookieOptions(0)
+    res.clearCookie('accessToken', clearOpts)
+    res.clearCookie('refreshToken', clearOpts)
   }
 
   /**

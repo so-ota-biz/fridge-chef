@@ -33,7 +33,6 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       }),
   )
   const clearAuth = useAuthStore((state) => state.clearAuth)
-  const updateTokens = useAuthStore((state) => state.updateTokens)
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -43,21 +42,12 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
       router.push('/auth/signin')
     }
 
-    const handleTokensUpdated = (event: Event) => {
-      const detail = (event as CustomEvent<{ accessToken: string; refreshToken?: string | null }>).detail
-      if (detail?.accessToken) {
-        updateTokens(detail.accessToken, detail.refreshToken ?? undefined)
-      }
-    }
-
     window.addEventListener('auth:expired', handleAuthExpired)
-    window.addEventListener('auth:tokens-updated', handleTokensUpdated)
 
     return () => {
       window.removeEventListener('auth:expired', handleAuthExpired)
-      window.removeEventListener('auth:tokens-updated', handleTokensUpdated)
     }
-  }, [clearAuth, router, updateTokens])
+  }, [clearAuth, router])
 
   return (
     <QueryClientProvider client={queryClient}>
