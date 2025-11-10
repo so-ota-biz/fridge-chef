@@ -7,6 +7,14 @@ const emitAuthExpired = () => {
   window.dispatchEvent(new CustomEvent('auth:expired'))
 }
 
+const getCookie = (name: string): string | undefined => {
+  if (!isBrowser()) return undefined
+  const value = document.cookie
+    .split('; ')
+    .find((row) => row.startsWith(`${name}=`))
+  return value ? decodeURIComponent(value.split('=')[1]) : undefined
+}
+
 // APIクライアントのインスタンスを作成
 const apiClient: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000',
@@ -21,7 +29,19 @@ const apiClient: AxiosInstance = axios.create({
 // リクエストインターセプター
 // ========================================
 apiClient.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => config,
+  (config: InternalAxiosRequestConfig) => {
+    // 変更系メソッドにCSRFヘッダを付与（サインインは除外）
+    const method = (config.method ?? 'get').toLowerCase()
+    const url = config.url ?? ''
+    const isMutation = method === 'post' || method === 'put' || method === 'patch' || method === 'delete'
+    if (isMutation && !url.includes('/auth/signin')) {
+      const csrf = getCookie('csrfToken')
+      if (csrf && config.headers) {
+        config.headers['X-CSRF-Token'] = csrf
+      }
+    }
+    return config
+  },
   (error: AxiosError) => Promise.reject(error),
 )
 
@@ -53,11 +73,14 @@ apiClient.interceptors.response.use(
       try {
         // トークンリフレッシュAPIを呼び出し（インターセプター回避のためaxios直呼び）
         const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-        await axios.post(
-          `${baseURL}/auth/refresh`,
-          {},
-          { withCredentials: true, headers: { 'Content-Type': 'application/json' } },
-        )
+        const csrf = getCookie('csrfToken')
+        await axios.post(`${baseURL}/auth/refresh`, {}, {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+          },
+        })
         // 元のリクエストを再実行
         return apiClient(originalRequest)
       } catch (refreshError) {

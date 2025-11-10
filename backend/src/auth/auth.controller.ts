@@ -19,6 +19,7 @@ import { ConfigService } from '@nestjs/config'
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
 import type { RequestWithUser } from '@/auth/types/request-with-user.type'
 import type { Response, CookieOptions } from 'express'
+import { randomBytes } from 'crypto'
 
 type RequestWithCookies = Request & { cookies?: Record<string, string | undefined> }
 
@@ -45,6 +46,22 @@ export class AuthController {
     }
   }
 
+  private csrfCookieOptions(maxAgeMs: number): CookieOptions {
+    const isProduction = process.env.NODE_ENV === 'production'
+    const secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
+    const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')
+    const sameSite: CookieOptions['sameSite'] = sameSiteEnv === 'none' ? 'none' : 'lax'
+    const domain = this.configService.get<string>('COOKIE_DOMAIN') || undefined
+    return {
+      httpOnly: false, // JSで読み取れる必要がある
+      secure,
+      sameSite,
+      domain,
+      path: '/',
+      maxAge: maxAgeMs,
+    }
+  }
+
   /**
    * サインアップ
    * POST /auth/signup
@@ -61,7 +78,10 @@ export class AuthController {
    */
   @Post('signin')
   @HttpCode(HttpStatus.OK)
-  async signIn(@Body() signInDto: SignInDto, @Res({ passthrough: true }) res: Response): Promise<{ user: AuthResponseDto['user'] }> {
+  async signIn(
+    @Body() signInDto: SignInDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ user: AuthResponseDto['user'] }> {
     const result = await this.authService.signIn(signInDto)
 
     // アクセス（15分）とリフレッシュ（7日）のCookieを設定
@@ -69,6 +89,9 @@ export class AuthController {
     const refreshMax = 7 * 24 * 60 * 60 * 1000
     res.cookie('accessToken', result.accessToken, this.cookieOptions(accessMax))
     res.cookie('refreshToken', result.refreshToken, this.cookieOptions(refreshMax))
+    // CSRFトークンをセット（24時間）
+    const csrfToken = randomBytes(32).toString('hex')
+    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(24 * 60 * 60 * 1000))
 
     return { user: result.user }
   }
@@ -79,8 +102,10 @@ export class AuthController {
    */
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshToken(@Request() req: RequestWithCookies, @Res({ passthrough: true }) res: Response): Promise<{ ok: true }>
-  {
+  async refreshToken(
+    @Request() req: RequestWithCookies,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<{ ok: true }> {
     const refresh = req.cookies?.refreshToken
     if (!refresh) {
       throw new UnauthorizedException('Refresh token is missing')
@@ -91,6 +116,9 @@ export class AuthController {
     const refreshMax = 7 * 24 * 60 * 60 * 1000
     res.cookie('accessToken', tokens.accessToken, this.cookieOptions(accessMax))
     res.cookie('refreshToken', tokens.refreshToken, this.cookieOptions(refreshMax))
+    // CSRFトークンもローテーション
+    const csrfToken = randomBytes(32).toString('hex')
+    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(24 * 60 * 60 * 1000))
     return { ok: true }
   }
 
@@ -100,10 +128,22 @@ export class AuthController {
    */
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async logout(@Res({ passthrough: true }) res: Response): Promise<void> {
+  logout(@Res({ passthrough: true }) res: Response): void {
     const clearOpts = this.cookieOptions(0)
     res.clearCookie('accessToken', clearOpts)
     res.clearCookie('refreshToken', clearOpts)
+    res.clearCookie('csrfToken', this.csrfCookieOptions(0))
+  }
+
+  /**
+   * CSRFトークン発行（必要時）
+   */
+  @Get('csrf')
+  @HttpCode(HttpStatus.OK)
+  issueCsrf(@Res({ passthrough: true }) res: Response): { ok: true } {
+    const csrfToken = randomBytes(32).toString('hex')
+    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(24 * 60 * 60 * 1000))
+    return { ok: true }
   }
 
   /**

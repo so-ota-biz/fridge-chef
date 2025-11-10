@@ -31,8 +31,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
     super({
       jwtFromRequest: (req: Request): string | null => {
-        const cookies = (req as Request & { cookies?: Record<string, string | undefined> }).cookies
-        return cookies?.accessToken ?? null
+        const cookiesUnknown = (req as Request & { cookies?: unknown }).cookies
+        if (cookiesUnknown && typeof cookiesUnknown === 'object') {
+          const token: unknown = (cookiesUnknown as Record<string, unknown>).accessToken
+          return typeof token === 'string' && token.length > 0 ? token : null
+        }
+        return null
       },
       ignoreExpiration: false,
       secretOrKey: jwtSecret,
