@@ -12,13 +12,17 @@ export class CsrfMiddleware implements NestMiddleware {
 
     // 読み取り専用メソッドは対象外
     if (method === 'GET' || method === 'HEAD' || method === 'OPTIONS') {
-      return next()
+      next()
+      return
     }
 
     // サインインはトークン未発行のため除外
     const path = req.path || req.url || ''
-    if (method === 'POST' && path.startsWith('/auth/signin')) {
-      return next()
+    if (
+      method === 'POST' && (path === '/auth/signin' || path.startsWith('/auth/signin?') || path === '/auth/signin/')
+    ) {
+      next()
+      return
     }
 
     const rawHeader = req.headers['x-csrf-token']
@@ -29,6 +33,6 @@ export class CsrfMiddleware implements NestMiddleware {
       throw new ForbiddenException('Invalid CSRF token')
     }
 
-    return next()
+    next()
   }
 }

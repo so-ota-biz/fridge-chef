@@ -9,6 +9,7 @@ import {
   Request,
   Res,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common'
 import { AuthService } from '@/auth/auth.service'
 import { SignUpDto } from '@/auth/dto/sign-up.dto'
@@ -30,11 +31,17 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {}
 
+  private readonly logger = new Logger(AuthController.name)
+
   private cookieOptions(maxAgeMs: number): CookieOptions {
     const isProduction = process.env.NODE_ENV === 'production'
-    const secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
+    let secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
     const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')
     const sameSite: CookieOptions['sameSite'] = sameSiteEnv === 'none' ? 'none' : 'lax'
+    if (sameSite === 'none' && !secure) {
+      this.logger.warn('COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。')
+      secure = true
+    }
     const domain = this.configService.get<string>('COOKIE_DOMAIN') || undefined
     return {
       httpOnly: true,
@@ -48,9 +55,13 @@ export class AuthController {
 
   private csrfCookieOptions(maxAgeMs: number): CookieOptions {
     const isProduction = process.env.NODE_ENV === 'production'
-    const secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
+    let secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
     const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')
     const sameSite: CookieOptions['sameSite'] = sameSiteEnv === 'none' ? 'none' : 'lax'
+    if (sameSite === 'none' && !secure) {
+      this.logger.warn('COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。')
+      secure = true
+    }
     const domain = this.configService.get<string>('COOKIE_DOMAIN') || undefined
     return {
       httpOnly: false, // JSで読み取れる必要がある
