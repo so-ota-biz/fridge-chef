@@ -21,17 +21,49 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+## 概要
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Cookieベース認証 + CSRF(ダブルサブミット)方式に対応しています。以下の環境変数を適切に設定してください。
 
-## Project setup
+### 必須・推奨環境変数
+
+- `FRONTEND_URL` フロントエンドのオリジン（例: `http://localhost:3001`）
+- `JWT_SECRET` JWTの署名鍵
+- `COOKIE_SECURE` `true|false` 本番は `true`（HTTPS必須）
+- `COOKIE_SAMESITE` `lax|none`
+  - 同一サイト: `lax` 推奨
+  - クロスサイト: `none`（この場合は `COOKIE_SECURE=true` が必須）
+- `COOKIE_DOMAIN` Cookieのドメイン
+  - 同一ホストのみで良い場合は未設定（省略）を推奨
+  - サブドメイン跨ぎが必要な場合は例: `.example.com`
+
+### ローカル開発例
+
+```
+FRONTEND_URL=http://localhost:3001
+COOKIE_SECURE=false
+COOKIE_SAMESITE=lax
+# COOKIE_DOMAIN は未設定（省略）
+```
+
+### 本番例（サブドメイン運用）
+
+```
+FRONTEND_URL=https://app.example.com
+COOKIE_SECURE=true
+COOKIE_SAMESITE=none
+COOKIE_DOMAIN=.example.com
+```
+
+注意: `SameSite=none` を採用する場合は必ず `Secure` を有効にしてください（ブラウザ要件）。
+
+## セットアップ
 
 ```bash
 $ npm install
 ```
 
-## Compile and run the project
+## 実行
 
 ```bash
 # development
@@ -44,7 +76,7 @@ $ npm run start:dev
 $ npm run start:prod
 ```
 
-## Run tests
+## テスト
 
 ```bash
 # unit tests
@@ -57,7 +89,7 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
-## Deployment
+## デプロイ
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
