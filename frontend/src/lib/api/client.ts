@@ -34,7 +34,12 @@ apiClient.interceptors.request.use(
     const method = (config.method ?? 'get').toLowerCase()
     const url = config.url ?? ''
     const isMutation = method === 'post' || method === 'put' || method === 'patch' || method === 'delete'
-    const isAuthEndpoint = url.includes('/auth/signin') || url.includes('/auth/signup')
+
+    // URLのパス部分を抽出（クエリパラメータ・フラグメント除外）
+    const urlPath = url.split('?')[0].split('#')[0]
+    // 厳密なパスマッチング
+    const isAuthEndpoint = urlPath === '/auth/signin' || urlPath === '/auth/signup'
+
     if (isMutation && !isAuthEndpoint) {
       const csrf = getCookie('csrfToken')
       if (csrf && config.headers) {
@@ -60,7 +65,9 @@ apiClient.interceptors.response.use(
     // 401エラー（認証エラー）かつ、まだリトライしていない場合
     if (error.response?.status === 401 && !originalRequest._retry) {
       // サインインリクエスト時は401エラーでもリダイレクトしない
-      if (originalRequest.url?.includes('/auth/signin')) {
+      const requestUrl = originalRequest.url ?? ''
+      const requestPath = requestUrl.split('?')[0].split('#')[0]
+      if (requestPath === '/auth/signin') {
         return Promise.reject(error)
       }
 

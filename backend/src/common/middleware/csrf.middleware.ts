@@ -19,8 +19,10 @@ export class CsrfMiddleware implements NestMiddleware {
     // サインイン・サインアップはトークン未発行のため除外
     const path = req.path || req.url || ''
     if (method === 'POST') {
-      const isSignIn = path === '/auth/signin' || path.startsWith('/auth/signin?') || path === '/auth/signin/'
-      const isSignUp = path === '/auth/signup' || path.startsWith('/auth/signup?') || path === '/auth/signup/'
+      const isSignIn =
+        path === '/auth/signin' || path.startsWith('/auth/signin?') || path === '/auth/signin/'
+      const isSignUp =
+        path === '/auth/signup' || path.startsWith('/auth/signup?') || path === '/auth/signup/'
       if (isSignIn || isSignUp) {
         next()
         return
