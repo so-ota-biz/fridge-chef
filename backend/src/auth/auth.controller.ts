@@ -27,16 +27,41 @@ type RequestWithCookies = Request & { cookies?: Record<string, string | undefine
 
 @Controller('auth')
 export class AuthController {
-  private readonly ACCESS_TOKEN_MAX_AGE = 15 * 60 * 1000 // 15分
-  private readonly REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000 // 7日
-  private readonly CSRF_TOKEN_MAX_AGE = 24 * 60 * 60 * 1000 // 24時間
+  private readonly ACCESS_TOKEN_MAX_AGE: number
+  private readonly REFRESH_TOKEN_MAX_AGE: number
+  private readonly CSRF_TOKEN_MAX_AGE: number
 
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    // 環境変数から期限を取得（開発環境では短く設定可能）
+    this.ACCESS_TOKEN_MAX_AGE = this.getTokenMaxAge(
+      'ACCESS_TOKEN_MAX_AGE_MS',
+      15 * 60 * 1000, // デフォルト: 15分
+    )
+    this.REFRESH_TOKEN_MAX_AGE = this.getTokenMaxAge(
+      'REFRESH_TOKEN_MAX_AGE_MS',
+      7 * 24 * 60 * 60 * 1000, // デフォルト: 7日
+    )
+    this.CSRF_TOKEN_MAX_AGE = this.getTokenMaxAge(
+      'CSRF_TOKEN_MAX_AGE_MS',
+      24 * 60 * 60 * 1000, // デフォルト: 24時間
+    )
+  }
 
   private readonly logger = new Logger(AuthController.name)
+
+  private getTokenMaxAge(envKey: string, defaultValue: number): number {
+    const envValue = this.configService.get<string>(envKey)
+    if (envValue) {
+      const parsed = parseInt(envValue, 10)
+      if (!isNaN(parsed) && parsed > 0) {
+        return parsed
+      }
+    }
+    return defaultValue
+  }
 
   private generateCsrfToken(): string {
     return randomBytes(32).toString('hex')

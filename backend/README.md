@@ -37,6 +37,14 @@ Cookieベース認証 + CSRF(ダブルサブミット)方式に対応してい�
   - 同一ホストのみで良い場合は未設定（省略）を推奨
   - サブドメイン跨ぎが必要な場合は例: `.example.com`
 
+### トークン期限設定（オプション）
+
+開発・テスト時にトークン期限を短縮できます（ミリ秒単位）：
+
+- `ACCESS_TOKEN_MAX_AGE_MS` アクセストークンの有効期限（デフォルト: 900000ms = 15分）
+- `REFRESH_TOKEN_MAX_AGE_MS` リフレッシュトークンの有効期限（デフォルト: 604800000ms = 7日）
+- `CSRF_TOKEN_MAX_AGE_MS` CSRFトークンの有効期限（デフォルト: 86400000ms = 24時間）
+
 ### ローカル開発例
 
 ```
@@ -44,6 +52,11 @@ FRONTEND_URL=http://localhost:3001
 COOKIE_SECURE=false
 COOKIE_SAMESITE=lax
 # COOKIE_DOMAIN は未設定（省略）
+
+# テスト用: トークン期限を短縮（オプション）
+# ACCESS_TOKEN_MAX_AGE_MS=120000      # 2分
+# REFRESH_TOKEN_MAX_AGE_MS=300000     # 5分
+# CSRF_TOKEN_MAX_AGE_MS=600000        # 10分
 ```
 
 ### 本番例（サブドメイン運用）
