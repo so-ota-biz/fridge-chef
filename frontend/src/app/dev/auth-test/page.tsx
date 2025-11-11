@@ -13,6 +13,8 @@ export default function AuthTestPage() {
   const [message, setMessage] = useState('')
   const [cookies, setCookies] = useState<Record<string, string>>({})
   const [testResponse, setTestResponse] = useState('')
+  const [localStorageData, setLocalStorageData] = useState<Array<[string, string]>>([])
+  const [isMounted, setIsMounted] = useState(false)
 
   // Cookieの状態を更新
   const refreshCookieStatus = () => {
@@ -24,10 +26,33 @@ export default function AuthTestPage() {
     setCookies(cookieObj)
   }
 
+  // LocalStorageの状態を更新
+  const refreshLocalStorageStatus = () => {
+    const data: Array<[string, string]> = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key) {
+        data.push([key, localStorage.getItem(key) || ''])
+      }
+    }
+    setLocalStorageData(data)
+  }
+
   useEffect(() => {
+    // クライアントサイドでのみ実行
+    setIsMounted(true)
+
     // 初回実行は次のtickで実行してwarningを回避
-    const timer = setTimeout(refreshCookieStatus, 0)
-    const interval = setInterval(refreshCookieStatus, 1000)
+    const timer = setTimeout(() => {
+      refreshCookieStatus()
+      refreshLocalStorageStatus()
+    }, 0)
+
+    const interval = setInterval(() => {
+      refreshCookieStatus()
+      refreshLocalStorageStatus()
+    }, 1000)
+
     return () => {
       clearTimeout(timer)
       clearInterval(interval)
@@ -97,6 +122,7 @@ export default function AuthTestPage() {
 
   const handleClearLocalStorage = () => {
     localStorage.clear()
+    refreshLocalStorageStatus()
     setMessage('🗑️ LocalStorage削除')
   }
 
@@ -230,11 +256,12 @@ export default function AuthTestPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold mb-4">LocalStorage状態</h2>
               <div className="space-y-2">
-                {typeof window !== 'undefined' && localStorage.length === 0 ? (
+                {!isMounted ? (
+                  <p className="text-gray-500">読み込み中...</p>
+                ) : localStorageData.length === 0 ? (
                   <p className="text-gray-500">LocalStorageなし</p>
                 ) : (
-                  typeof window !== 'undefined' &&
-                  Object.entries(localStorage).map(([key, value]) => (
+                  localStorageData.map(([key, value]) => (
                     <div key={key} className="border-b pb-2">
                       <p className="font-mono text-sm">
                         <strong>{key}:</strong>

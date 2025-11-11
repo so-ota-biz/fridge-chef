@@ -67,11 +67,21 @@ export const useAuthStore = create<AuthState>()(
       restoreAuth: () => {
         ;(async () => {
           try {
-            // まずCSRFトークンを初期化
-            await authApi.initializeCsrf()
-            
-            // 認証状態を確認
-            const me = await authApi.getMe()
+            // 認証状態を確認（インターセプターを避けるため axios 直接使用）
+            // /auth/me はGETなのでCSRFトークン不要
+            const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+            const response = await fetch(`${baseURL}/auth/me`, {
+              credentials: 'include', // Cookie送信
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            })
+
+            if (!response.ok) {
+              throw new Error('Not authenticated')
+            }
+
+            const me = await response.json()
             const nextUser: AuthUser = {
               id: me.id,
               email: me.email,
@@ -80,7 +90,7 @@ export const useAuthStore = create<AuthState>()(
             }
             set({ user: nextUser, isAuthenticated: true, isAuthRestored: true })
           } catch {
-            // 認証失敗時もCSRFトークンは確保
+            // 認証失敗時はCSRFトークンだけ取得（未認証でも変更系リクエストに備えて）
             await authApi.initializeCsrf()
             set({ isAuthRestored: true, isAuthenticated: false, user: null })
           }
