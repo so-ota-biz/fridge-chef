@@ -7,6 +7,47 @@ Cookie ベース JWT 認証（ダブルサブミット）完全動作確認チ�
 - Network タブでリクエスト・レスポンス監視を開始
 - Console タブでエラー・ログ監視を開始
 
+📋 1. トークン期限の環境変数化
+
+backend/.env に追加可能な設定:
+
+テスト用: トークン期限を短縮（オプション）
+
+ACCESS_TOKEN_MAX_AGE_MS=120000 # 2 分
+REFRESH_TOKEN_MAX_AGE_MS=300000 # 5 分
+CSRF_TOKEN_MAX_AGE_MS=600000 # 10 分
+
+📋 2. 開発用認証テストページ
+
+URL: http://localhost:3001/dev/auth-test
+
+機能:
+
+- ✅ サインアップ/サインイン/ログアウト操作
+- ✅ Cookie/LocalStorage 状態のリアルタイム表示（1 秒ごと更新）
+- ✅ テスト POST リクエスト（CSRF 動作確認）
+- ✅ CSRF トークン初期化
+- ✅ Cookie/LocalStorage 一括削除
+- ✅ テストシナリオガイド表示
+- ✅ エラーメッセージ表示
+
+---
+
+🔄 Cookie 期限切れテスト（2 分で確認）
+
+1. ACCESS_TOKEN_MAX_AGE_MS=120000 を設定
+2. サインイン
+3. 2 分待つ
+4. 「テスト POST リクエスト」ボタンをクリック
+5. 自動リフレッシュを確認（Network タブで /auth/refresh が呼ばれる）
+
+🔄 CSRF 復旧フローテスト
+
+1. サインイン
+2. 「全 Cookie 削除」ボタンをクリック
+3. 「テスト POST リクエスト」ボタンをクリック
+4. CSRF 復旧フロー確認（/auth/csrf → /auth/refresh → 元のリクエスト）
+
 ---
 
 🔄 基本認証フロー
@@ -104,7 +145,7 @@ document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
 操作: ログアウトボタンをクリック
 確認点:
 
-- Network: POST /auth/logout（JWT認証のみ、CSRF不要）
+- Network: POST /auth/logout（JWT 認証のみ、CSRF 不要）
 - Response: 204 No Content
 - Cookies: 全認証関連 Cookie 削除
 - LocalStorage: auth-storage クリア（user: null）

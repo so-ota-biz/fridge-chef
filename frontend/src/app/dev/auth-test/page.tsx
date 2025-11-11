@@ -4,12 +4,15 @@ import { useState, useEffect } from 'react'
 import { signUp, signIn, logout, initializeCsrf } from '@/lib/api/auth'
 import { apiClient } from '@/lib/api/client'
 import { useAuth } from '@/lib/hooks/useAuth'
+import { useAuthStore } from '@/lib/store/authStore'
 
 export default function AuthTestPage() {
   const { user, isAuthenticated } = useAuth()
-  const [email, setEmail] = useState('test@example.com')
-  const [password, setPassword] = useState('password123')
-  const [name, setName] = useState('Test User')
+  const setAuth = useAuthStore((state) => state.setAuth)
+  const clearAuth = useAuthStore((state) => state.clearAuth)
+  const [email, setEmail] = useState('newuser@example.com')
+  const [password, setPassword] = useState('Test1234!')
+  const [displayName, setDisplayName] = useState('Test User')
   const [message, setMessage] = useState('')
   const [cookies, setCookies] = useState<Record<string, string>>({})
   const [testResponse, setTestResponse] = useState('')
@@ -39,29 +42,36 @@ export default function AuthTestPage() {
   }
 
   useEffect(() => {
-    // クライアントサイドでのみ実行
-    setIsMounted(true)
-
-    // 初回実行は次のtickで実行してwarningを回避
+    // クライアントサイドでのマウント状態を非同期で設定
     const timer = setTimeout(() => {
-      refreshCookieStatus()
-      refreshLocalStorageStatus()
+      setIsMounted(true)
     }, 0)
 
-    const interval = setInterval(() => {
+    return () => clearTimeout(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!isMounted) return
+
+    const updateStatus = () => {
       refreshCookieStatus()
       refreshLocalStorageStatus()
-    }, 1000)
+    }
+
+    // 初回実行を非同期で行う
+    const timer = setTimeout(updateStatus, 0)
+
+    const interval = setInterval(updateStatus, 1000)
 
     return () => {
       clearTimeout(timer)
       clearInterval(interval)
     }
-  }, [])
+  }, [isMounted])
 
   const handleSignUp = async () => {
     try {
-      await signUp({ email, password, name })
+      await signUp({ email, password, displayName: displayName })
       setMessage('✅ サインアップ成功')
       refreshCookieStatus()
     } catch (error) {
@@ -71,7 +81,8 @@ export default function AuthTestPage() {
 
   const handleSignIn = async () => {
     try {
-      await signIn({ email, password })
+      const response = await signIn({ email, password })
+      setAuth(response.user) // 認証状態をストアに保存
       setMessage('✅ サインイン成功')
       refreshCookieStatus()
     } catch (error) {
@@ -82,6 +93,7 @@ export default function AuthTestPage() {
   const handleLogout = async () => {
     try {
       await logout()
+      clearAuth() // 認証状態をクリア
       setMessage('✅ ログアウト成功')
       refreshCookieStatus()
     } catch (error) {
@@ -95,18 +107,23 @@ export default function AuthTestPage() {
       setMessage('✅ CSRFトークン初期化成功')
       refreshCookieStatus()
     } catch (error) {
-      setMessage(`❌ CSRFトークン初期化失敗: ${error instanceof Error ? error.message : '不明なエラー'}`)
+      setMessage(
+        `❌ CSRFトークン初期化失敗: ${error instanceof Error ? error.message : '不明なエラー'}`,
+      )
     }
   }
 
   const handleTestPost = async () => {
     try {
-      const response = await apiClient.post('/test/post', { message: 'Test POST request' })
-      setTestResponse(`✅ POST成功: ${JSON.stringify(response.data)}`)
-      setMessage('✅ テストPOST成功')
+      // 現在のユーザー情報で更新（実質的にノーオペレーション）
+      const response = await apiClient.patch('/users/me', {
+        displayName: user?.displayName || 'Test User',
+      })
+      setTestResponse(`✅ PATCH成功: ${JSON.stringify(response.data)}`)
+      setMessage('✅ テスト更新成功')
     } catch (error) {
-      setTestResponse(`❌ POST失敗: ${error instanceof Error ? error.message : '不明なエラー'}`)
-      setMessage(`❌ テストPOST失敗: ${error instanceof Error ? error.message : '不明なエラー'}`)
+      setTestResponse(`❌ PATCH失敗: ${error instanceof Error ? error.message : '不明なエラー'}`)
+      setMessage(`❌ テスト更新失敗: ${error instanceof Error ? error.message : '不明なエラー'}`)
     }
   }
 
@@ -116,7 +133,7 @@ export default function AuthTestPage() {
       const name = eqPos > -1 ? c.substring(0, eqPos).trim() : c.trim()
       document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/'
     })
-    setMessage('🗑️ 全Cookie削除')
+    setMessage('🗑️ CSRF Cookie削除')
     refreshCookieStatus()
   }
 
@@ -147,7 +164,7 @@ export default function AuthTestPage() {
                 {user && (
                   <>
                     <p>
-                      <strong>ユーザー名:</strong> {user.name}
+                      <strong>ユーザー名:</strong> {user.displayName}
                     </p>
                     <p>
                       <strong>Email:</strong> {user.email}
@@ -178,19 +195,28 @@ export default function AuthTestPage() {
                 <input
                   type="text"
                   placeholder="Name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
                   className="w-full px-4 py-2 border rounded"
                 />
                 <div className="flex gap-2">
-                  <button onClick={handleSignUp} className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                  <button
+                    onClick={handleSignUp}
+                    className="flex-1 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                  >
                     サインアップ
                   </button>
-                  <button onClick={handleSignIn} className="flex-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
+                  <button
+                    onClick={handleSignIn}
+                    className="flex-1 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                  >
                     サインイン
                   </button>
                 </div>
-                <button onClick={handleLogout} className="w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                <button
+                  onClick={handleLogout}
+                  className="w-full bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                >
                   ログアウト
                 </button>
               </div>
@@ -200,14 +226,23 @@ export default function AuthTestPage() {
             <div className="bg-white rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold mb-4">テストアクション</h2>
               <div className="space-y-2">
-                <button onClick={handleInitCsrf} className="w-full bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">
+                <button
+                  onClick={handleInitCsrf}
+                  className="w-full bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+                >
                   CSRFトークン初期化
                 </button>
-                <button onClick={handleTestPost} className="w-full bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600">
-                  テストPOSTリクエスト
+                <button
+                  onClick={handleTestPost}
+                  className="w-full bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600"
+                >
+                  テストPATCHリクエスト
                 </button>
-                <button onClick={handleClearCookies} className="w-full bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">
-                  全Cookie削除
+                <button
+                  onClick={handleClearCookies}
+                  className="w-full bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600"
+                >
+                  CSRF Cookie削除
                 </button>
                 <button
                   onClick={handleClearLocalStorage}
@@ -244,7 +279,10 @@ export default function AuthTestPage() {
                     <div key={key} className="border-b pb-2">
                       <p className="font-mono text-sm">
                         <strong>{key}:</strong>{' '}
-                        <span className="text-gray-600">{value.substring(0, 50)}{value.length > 50 ? '...' : ''}</span>
+                        <span className="text-gray-600">
+                          {value.substring(0, 50)}
+                          {value.length > 50 ? '...' : ''}
+                        </span>
                       </p>
                     </div>
                   ))
