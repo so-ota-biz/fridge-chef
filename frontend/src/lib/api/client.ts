@@ -30,11 +30,12 @@ const apiClient: AxiosInstance = axios.create({
 // ========================================
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // 変更系メソッドにCSRFヘッダを付与（サインインは除外）
+    // 変更系メソッドにCSRFヘッダを付与（サインイン・サインアップは除外）
     const method = (config.method ?? 'get').toLowerCase()
     const url = config.url ?? ''
     const isMutation = method === 'post' || method === 'put' || method === 'patch' || method === 'delete'
-    if (isMutation && !url.includes('/auth/signin')) {
+    const isAuthEndpoint = url.includes('/auth/signin') || url.includes('/auth/signup')
+    if (isMutation && !isAuthEndpoint) {
       const csrf = getCookie('csrfToken')
       if (csrf && config.headers) {
         config.headers['X-CSRF-Token'] = csrf

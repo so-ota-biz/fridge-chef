@@ -16,14 +16,15 @@ export class CsrfMiddleware implements NestMiddleware {
       return
     }
 
-    // サインインはトークン未発行のため除外
+    // サインイン・サインアップはトークン未発行のため除外
     const path = req.path || req.url || ''
-    if (
-      method === 'POST' &&
-      (path === '/auth/signin' || path.startsWith('/auth/signin?') || path === '/auth/signin/')
-    ) {
-      next()
-      return
+    if (method === 'POST') {
+      const isSignIn = path === '/auth/signin' || path.startsWith('/auth/signin?') || path === '/auth/signin/'
+      const isSignUp = path === '/auth/signup' || path.startsWith('/auth/signup?') || path === '/auth/signup/'
+      if (isSignIn || isSignUp) {
+        next()
+        return
+      }
     }
 
     const rawHeader = req.headers['x-csrf-token']
