@@ -27,6 +27,10 @@ type RequestWithCookies = Request & { cookies?: Record<string, string | undefine
 
 @Controller('auth')
 export class AuthController {
+  private readonly ACCESS_TOKEN_MAX_AGE = 15 * 60 * 1000 // 15分
+  private readonly REFRESH_TOKEN_MAX_AGE = 7 * 24 * 60 * 60 * 1000 // 7日
+  private readonly CSRF_TOKEN_MAX_AGE = 24 * 60 * 60 * 1000 // 24時間
+
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
@@ -34,7 +38,11 @@ export class AuthController {
 
   private readonly logger = new Logger(AuthController.name)
 
-  private cookieOptions(maxAgeMs: number): CookieOptions {
+  private generateCsrfToken(): string {
+    return randomBytes(32).toString('hex')
+  }
+
+  private buildCookieOptions(maxAgeMs: number, httpOnly: boolean): CookieOptions {
     const isProduction = process.env.NODE_ENV === 'production'
     let secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
     const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')?.toLowerCase()
@@ -66,7 +74,7 @@ export class AuthController {
     }
     const domain = this.configService.get<string>('COOKIE_DOMAIN') || undefined
     return {
-      httpOnly: true,
+      httpOnly,
       secure,
       sameSite,
       domain,
@@ -75,45 +83,12 @@ export class AuthController {
     }
   }
 
+  private cookieOptions(maxAgeMs: number): CookieOptions {
+    return this.buildCookieOptions(maxAgeMs, true)
+  }
+
   private csrfCookieOptions(maxAgeMs: number): CookieOptions {
-    const isProduction = process.env.NODE_ENV === 'production'
-    let secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
-    const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')?.toLowerCase()
-    let sameSite: CookieOptions['sameSite']
-    switch (sameSiteEnv) {
-      case 'strict':
-        sameSite = 'strict'
-        break
-      case 'none':
-        sameSite = 'none'
-        break
-      case 'lax':
-      case undefined:
-      case '':
-        sameSite = 'lax'
-        break
-      default:
-        this.logger.warn(
-          `COOKIE_SAMESITE=${sameSiteEnv} はサポートされていません。lax を適用します。`,
-        )
-        sameSite = 'lax'
-        break
-    }
-    if (sameSite === 'none' && !secure) {
-      this.logger.warn(
-        'COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。',
-      )
-      secure = true
-    }
-    const domain = this.configService.get<string>('COOKIE_DOMAIN') || undefined
-    return {
-      httpOnly: false, // JSで読み取れる必要がある
-      secure,
-      sameSite,
-      domain,
-      path: '/',
-      maxAge: maxAgeMs,
-    }
+    return this.buildCookieOptions(maxAgeMs, false) // JSで読み取れる必要がある
   }
 
   /**
@@ -139,13 +114,11 @@ export class AuthController {
     const result = await this.authService.signIn(signInDto)
 
     // アクセス（15分）とリフレッシュ（7日）のCookieを設定
-    const accessMax = 15 * 60 * 1000
-    const refreshMax = 7 * 24 * 60 * 60 * 1000
-    res.cookie('accessToken', result.accessToken, this.cookieOptions(accessMax))
-    res.cookie('refreshToken', result.refreshToken, this.cookieOptions(refreshMax))
+    res.cookie('accessToken', result.accessToken, this.cookieOptions(this.ACCESS_TOKEN_MAX_AGE))
+    res.cookie('refreshToken', result.refreshToken, this.cookieOptions(this.REFRESH_TOKEN_MAX_AGE))
     // CSRFトークンをセット（24時間）
-    const csrfToken = randomBytes(32).toString('hex')
-    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(24 * 60 * 60 * 1000))
+    const csrfToken = this.generateCsrfToken()
+    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(this.CSRF_TOKEN_MAX_AGE))
 
     return { user: result.user }
   }
@@ -167,13 +140,11 @@ export class AuthController {
     }
     const tokens = await this.authService.refreshToken(refresh)
 
-    const accessMax = 15 * 60 * 1000
-    const refreshMax = 7 * 24 * 60 * 60 * 1000
-    res.cookie('accessToken', tokens.accessToken, this.cookieOptions(accessMax))
-    res.cookie('refreshToken', tokens.refreshToken, this.cookieOptions(refreshMax))
+    res.cookie('accessToken', tokens.accessToken, this.cookieOptions(this.ACCESS_TOKEN_MAX_AGE))
+    res.cookie('refreshToken', tokens.refreshToken, this.cookieOptions(this.REFRESH_TOKEN_MAX_AGE))
     // CSRFトークンもローテーション
-    const csrfToken = randomBytes(32).toString('hex')
-    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(24 * 60 * 60 * 1000))
+    const csrfToken = this.generateCsrfToken()
+    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(this.CSRF_TOKEN_MAX_AGE))
     return { ok: true }
   }
 
@@ -182,7 +153,6 @@ export class AuthController {
    * POST /auth/logout
    */
   @Post('logout')
-  @CsrfProtection()
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   logout(@Res({ passthrough: true }) res: Response): void {
@@ -198,8 +168,8 @@ export class AuthController {
   @Get('csrf')
   @HttpCode(HttpStatus.OK)
   issueCsrf(@Res({ passthrough: true }) res: Response): { ok: true } {
-    const csrfToken = randomBytes(32).toString('hex')
-    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(24 * 60 * 60 * 1000))
+    const csrfToken = this.generateCsrfToken()
+    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(this.CSRF_TOKEN_MAX_AGE))
     return { ok: true }
   }
 

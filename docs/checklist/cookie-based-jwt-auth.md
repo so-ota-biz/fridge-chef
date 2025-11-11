@@ -104,7 +104,7 @@ document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
 操作: ログアウトボタンをクリック
 確認点:
 
-- Network: POST /auth/logout に CSRF ヘッダー
+- Network: POST /auth/logout（JWT認証のみ、CSRF不要）
 - Response: 204 No Content
 - Cookies: 全認証関連 Cookie 削除
 - LocalStorage: auth-storage クリア（user: null）

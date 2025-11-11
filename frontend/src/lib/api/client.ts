@@ -84,6 +84,31 @@ apiClient.interceptors.response.use(
         // 元のリクエストを再実行
         return apiClient(originalRequest)
       } catch (refreshError) {
+        // CSRF検証失敗(403)の場合、復旧フローを試みる
+        if (axios.isAxiosError(refreshError) && refreshError.response?.status === 403) {
+          try {
+            // 新しいCSRFトークンを取得
+            const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+            await axios.get(`${baseURL}/auth/csrf`, { withCredentials: true })
+
+            // 新しいトークンでリフレッシュを再試行
+            const newCsrf = getCookie('csrfToken')
+            await axios.post(`${baseURL}/auth/refresh`, {}, {
+              withCredentials: true,
+              headers: {
+                'Content-Type': 'application/json',
+                ...(newCsrf ? { 'X-CSRF-Token': newCsrf } : {}),
+              },
+            })
+            // 元のリクエストを再実行
+            return apiClient(originalRequest)
+          } catch (recoveryError) {
+            // 復旧失敗時はログアウト誘導
+            emitAuthExpired()
+            return Promise.reject(recoveryError)
+          }
+        }
+
         // リフレッシュ失敗時はアプリ側でログアウト誘導
         emitAuthExpired()
         return Promise.reject(refreshError)
