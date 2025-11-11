@@ -37,8 +37,27 @@ export class AuthController {
   private cookieOptions(maxAgeMs: number): CookieOptions {
     const isProduction = process.env.NODE_ENV === 'production'
     let secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
-    const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')
-    const sameSite: CookieOptions['sameSite'] = sameSiteEnv === 'none' ? 'none' : 'lax'
+    const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')?.toLowerCase()
+    let sameSite: CookieOptions['sameSite']
+    switch (sameSiteEnv) {
+      case 'strict':
+        sameSite = 'strict'
+        break
+      case 'none':
+        sameSite = 'none'
+        break
+      case 'lax':
+      case undefined:
+      case '':
+        sameSite = 'lax'
+        break
+      default:
+        this.logger.warn(
+          `COOKIE_SAMESITE=${sameSiteEnv} はサポートされていません。lax を適用します。`,
+        )
+        sameSite = 'lax'
+        break
+    }
     if (sameSite === 'none' && !secure) {
       this.logger.warn(
         'COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。',
@@ -59,8 +78,27 @@ export class AuthController {
   private csrfCookieOptions(maxAgeMs: number): CookieOptions {
     const isProduction = process.env.NODE_ENV === 'production'
     let secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
-    const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')
-    const sameSite: CookieOptions['sameSite'] = sameSiteEnv === 'none' ? 'none' : 'lax'
+    const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')?.toLowerCase()
+    let sameSite: CookieOptions['sameSite']
+    switch (sameSiteEnv) {
+      case 'strict':
+        sameSite = 'strict'
+        break
+      case 'none':
+        sameSite = 'none'
+        break
+      case 'lax':
+      case undefined:
+      case '':
+        sameSite = 'lax'
+        break
+      default:
+        this.logger.warn(
+          `COOKIE_SAMESITE=${sameSiteEnv} はサポートされていません。lax を適用します。`,
+        )
+        sameSite = 'lax'
+        break
+    }
     if (sameSite === 'none' && !secure) {
       this.logger.warn(
         'COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。',

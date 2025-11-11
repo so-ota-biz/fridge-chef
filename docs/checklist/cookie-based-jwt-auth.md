@@ -139,7 +139,7 @@ document.cookie = 'csrfToken=fake-token; path=/;';
 確認点:
 
 - Network: X-CSRF-Token は古い（正しくない）値
-- Response: 401 Unauthorized（CSRF validation failed）
+- Response: 403 Forbidden（Invalid CSRF token）
 - UI: 操作が拒否される
 
 11. Cookie 設定確認

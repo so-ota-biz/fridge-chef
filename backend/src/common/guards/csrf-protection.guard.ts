@@ -2,7 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
-  UnauthorizedException,
+  ForbiddenException,
   Logger,
 } from '@nestjs/common'
 import type { Request } from 'express'
@@ -20,7 +20,7 @@ export class CsrfProtectionGuard implements CanActivate {
 
     if (!isValid) {
       this.logger.warn(`CSRF token validation failed for ${request.method} ${request.url}`)
-      throw new UnauthorizedException('CSRF token validation failed')
+      throw new ForbiddenException('CSRF token validation failed')
     }
 
     this.logger.debug(`CSRF token validation passed for ${request.method} ${request.url}`)
