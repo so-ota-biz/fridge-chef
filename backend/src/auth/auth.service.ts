@@ -13,13 +13,15 @@ import { SignUpDto } from '@/auth/dto/sign-up.dto'
 import { SignInDto } from '@/auth/dto/sign-in.dto'
 import { SignUpResponseDto } from '@/auth/dto/sign-up-response.dto'
 import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
-import { RefreshTokenResponseDto } from '@/auth/dto/refresh-token-response.dto'
 import { Database } from '@/types/database.types'
 import { JwtPayload } from '@/auth/types/jwt-payload.type'
+import { TokenConfigUtil } from '@/common/utils/token-config.util'
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name)
   private _supabaseAdmin: SupabaseClient<Database> | null = null
+  private readonly ACCESS_TOKEN_MAX_AGE: number
+  private readonly REFRESH_TOKEN_MAX_AGE: number
 
   private get supabaseAdmin(): SupabaseClient<Database> {
     if (!this._supabaseAdmin) {
@@ -42,7 +44,11 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
-  ) {}
+  ) {
+    // 環境変数から期限を取得（開発環境では短く設定可能）
+    this.ACCESS_TOKEN_MAX_AGE = TokenConfigUtil.getAccessTokenMaxAge(this.configService)
+    this.REFRESH_TOKEN_MAX_AGE = TokenConfigUtil.getRefreshTokenMaxAge(this.configService)
+  }
 
   /**
    * サインアップ処理
@@ -178,7 +184,7 @@ export class AuthService {
   /**
    * トークンリフレッシュ
    */
-  async refreshToken(refreshToken: string): Promise<RefreshTokenResponseDto> {
+  async refreshToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
     try {
       // リフレッシュトークンを検証
       const payload = await this.jwtService.verifyAsync<JwtPayload>(refreshToken)
@@ -214,11 +220,13 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string }> {
     const payload: JwtPayload = { sub: userId, email }
 
+    // 環境変数から取得した期限をJWTの期限として使用（秒単位）
+    const accessTokenExpires = Math.floor(this.ACCESS_TOKEN_MAX_AGE / 1000)
+    const refreshTokenExpires = Math.floor(this.REFRESH_TOKEN_MAX_AGE / 1000)
+
     const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload),
-      this.jwtService.signAsync(payload, {
-        expiresIn: '7d',
-      }),
+      this.jwtService.signAsync(payload, { expiresIn: accessTokenExpires }),
+      this.jwtService.signAsync(payload, { expiresIn: refreshTokenExpires }),
     ])
 
     return { accessToken, refreshToken }

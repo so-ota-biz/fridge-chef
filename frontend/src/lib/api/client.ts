@@ -1,29 +1,25 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 
-type AuthEventDetail = {
-  accessToken: string
-  refreshToken?: string | null
-}
+const isBrowser = () => typeof window !== 'undefined'
 
-const isBrowser = () => typeof window !== 'undefined' && typeof window.localStorage !== 'undefined'
-
-const emitAuthEvent = (type: 'auth:expired' | 'auth:tokens-updated', detail?: AuthEventDetail) => {
+const emitAuthExpired = () => {
   if (!isBrowser()) return
-  window.dispatchEvent(new CustomEvent(type, { detail }))
+  window.dispatchEvent(new CustomEvent('auth:expired'))
 }
 
-const safeStorage = {
-  getItem: (key: string) => (isBrowser() ? window.localStorage.getItem(key) : null),
-  setItem: (key: string, value: string) => {
-    if (isBrowser()) {
-      window.localStorage.setItem(key, value)
-    }
-  },
-  removeItem: (key: string) => {
-    if (isBrowser()) {
-      window.localStorage.removeItem(key)
-    }
-  },
+const getCookie = (name: string): string | undefined => {
+  if (!isBrowser()) return undefined
+  
+  try {
+    const value = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith(`${name}=`))
+    return value ? decodeURIComponent(value.split('=')[1]) : undefined
+  } catch (error) {
+    // Cookie解析エラー時はundefinedを返す
+    console.warn(`Failed to parse cookie '${name}':`, error)
+    return undefined
+  }
 }
 
 // APIクライアントのインスタンスを作成
@@ -33,6 +29,7 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 })
 
 // ========================================
@@ -40,19 +37,25 @@ const apiClient: AxiosInstance = axios.create({
 // ========================================
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // ローカルストレージからアクセストークンを取得
-    const token = safeStorage.getItem('accessToken')
+    // 変更系メソッドにCSRFヘッダを付与（サインイン・サインアップは除外）
+    const method = (config.method ?? 'get').toLowerCase()
+    const url = config.url ?? ''
+    const isMutation = method === 'post' || method === 'put' || method === 'patch' || method === 'delete'
 
-    // トークンが存在する場合、Authorizationヘッダーに追加
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`
+    // URLのパス部分を抽出（クエリパラメータ・フラグメント除外）
+    const urlPath = url.split('?')[0].split('#')[0]
+    // 厳密なパスマッチング
+    const isAuthEndpoint = urlPath === '/auth/signin' || urlPath === '/auth/signup'
+
+    if (isMutation && !isAuthEndpoint) {
+      const csrf = getCookie('csrfToken')
+      if (csrf && config.headers) {
+        config.headers['X-CSRF-Token'] = csrf
+      }
     }
-
     return config
   },
-  (error: AxiosError) => {
-    return Promise.reject(error)
-  },
+  (error: AxiosError) => Promise.reject(error),
 )
 
 // ========================================
@@ -69,7 +72,9 @@ apiClient.interceptors.response.use(
     // 401エラー（認証エラー）かつ、まだリトライしていない場合
     if (error.response?.status === 401 && !originalRequest._retry) {
       // サインインリクエスト時は401エラーでもリダイレクトしない
-      if (originalRequest.url?.includes('/auth/signin')) {
+      const requestUrl = originalRequest.url ?? ''
+      const requestPath = requestUrl.split('?')[0].split('#')[0]
+      if (requestPath === '/auth/signin') {
         return Promise.reject(error)
       }
 
@@ -81,44 +86,46 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true
 
       try {
-        const refreshToken = safeStorage.getItem('refreshToken')
-
-        // リフレッシュトークンがない場合はログアウト処理
-        if (!refreshToken) {
-          safeStorage.removeItem('accessToken')
-          safeStorage.removeItem('refreshToken')
-          emitAuthEvent('auth:expired')
-          return Promise.reject(error)
-        }
-
-        // トークンリフレッシュAPIを呼び出し（無限ループを防ぐため、apiClientは使わない）
+        // トークンリフレッシュAPIを呼び出し（インターセプター回避のためaxios直呼び）
         const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-        const response = await axios.post(`${baseURL}/auth/refresh`, {
-          refreshToken,
+        const csrf = getCookie('csrfToken')
+        await axios.post(`${baseURL}/auth/refresh`, {}, {
+          withCredentials: true,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+          },
         })
-
-        const { accessToken, refreshToken: newRefreshToken } = response.data
-
-        // 新しいトークンをローカルストレージに保存
-        safeStorage.setItem('accessToken', accessToken)
-        if (newRefreshToken) {
-          safeStorage.setItem('refreshToken', newRefreshToken)
-        }
-
-        // 元のリクエストのAuthorizationヘッダーを更新
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`
-        }
-
-        emitAuthEvent('auth:tokens-updated', { accessToken, refreshToken: newRefreshToken ?? null })
-
         // 元のリクエストを再実行
         return apiClient(originalRequest)
       } catch (refreshError) {
-        // リフレッシュ失敗時はログアウト
-        safeStorage.removeItem('accessToken')
-        safeStorage.removeItem('refreshToken')
-        emitAuthEvent('auth:expired')
+        // CSRF検証失敗(403)の場合、復旧フローを試みる
+        if (axios.isAxiosError(refreshError) && refreshError.response?.status === 403) {
+          try {
+            // 新しいCSRFトークンを取得
+            const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+            await axios.get(`${baseURL}/auth/csrf`, { withCredentials: true })
+
+            // 新しいトークンでリフレッシュを再試行
+            const newCsrf = getCookie('csrfToken')
+            await axios.post(`${baseURL}/auth/refresh`, {}, {
+              withCredentials: true,
+              headers: {
+                'Content-Type': 'application/json',
+                ...(newCsrf ? { 'X-CSRF-Token': newCsrf } : {}),
+              },
+            })
+            // 元のリクエストを再実行
+            return apiClient(originalRequest)
+          } catch (recoveryError) {
+            // 復旧失敗時はログアウト誘導
+            emitAuthExpired()
+            return Promise.reject(recoveryError)
+          }
+        }
+
+        // リフレッシュ失敗時はアプリ側でログアウト誘導
+        emitAuthExpired()
         return Promise.reject(refreshError)
       }
     }

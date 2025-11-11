@@ -1,10 +1,11 @@
-import { Module } from '@nestjs/common'
+import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from '@/auth/auth.module'
 import { PrismaModule } from '@/prisma/prisma.module'
 import { UsersModule } from './users/users.module'
+import { CsrfMiddleware } from '@/common/middleware/csrf.middleware'
 
 @Module({
   imports: [
@@ -18,4 +19,14 @@ import { UsersModule } from './users/users.module'
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(CsrfMiddleware)
+      .exclude(
+        { path: 'auth/signin', method: RequestMethod.POST },
+        { path: 'auth/csrf', method: RequestMethod.GET },
+      )
+      .forRoutes({ path: '*', method: RequestMethod.ALL })
+  }
+}

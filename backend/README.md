@@ -21,51 +21,98 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+## 概要
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Cookieベース認証 + CSRF(ダブルサブミット)方式に対応しています。以下の環境変数を適切に設定してください。
 
-## Project setup
+### 必須・推奨環境変数
+
+- `FRONTEND_URL` フロントエンドのオリジン（例: `http://localhost:3001`）
+- `JWT_SECRET` JWTの署名鍵
+- `COOKIE_SECURE` `true|false` 本番は `true`（HTTPS必須）
+- `COOKIE_SAMESITE` `lax|none`
+  - 同一サイト: `lax` 推奨
+  - クロスサイト: `none`（この場合は `COOKIE_SECURE=true` が必須）
+- `COOKIE_DOMAIN` Cookieのドメイン
+  - 同一ホストのみで良い場合は未設定（省略）を推奨
+  - サブドメイン跨ぎが必要な場合は例: `.example.com`
+
+### トークン期限設定（オプション）
+
+開発・テスト時にトークン期限を短縮できます（ミリ秒単位）：
+
+- `ACCESS_TOKEN_MAX_AGE_MS` アクセストークンの有効期限（デフォルト: 900000ms = 15分）
+- `REFRESH_TOKEN_MAX_AGE_MS` リフレッシュトークンの有効期限（デフォルト: 604800000ms = 7日）
+- `CSRF_TOKEN_MAX_AGE_MS` CSRFトークンの有効期限（デフォルト: 86400000ms = 24時間）
+
+### ローカル開発例
 
 ```bash
-$ npm install
+FRONTEND_URL=http://localhost:3001
+COOKIE_SECURE=false
+COOKIE_SAMESITE=lax
+# COOKIE_DOMAIN は未設定（省略）
+
+# テスト用: トークン期限を短縮（オプション）
+# ACCESS_TOKEN_MAX_AGE_MS=120000      # 2分
+# REFRESH_TOKEN_MAX_AGE_MS=300000     # 5分
+# CSRF_TOKEN_MAX_AGE_MS=600000        # 10分
 ```
 
-## Compile and run the project
+### 本番例（サブドメイン運用）
+
+```bash
+FRONTEND_URL=https://app.example.com
+COOKIE_SECURE=true
+COOKIE_SAMESITE=none
+COOKIE_DOMAIN=.example.com
+```
+
+注意: `SameSite=none` を採用する場合は必ず `Secure` を有効にしてください（ブラウザ要件）。
+
+## セットアップ
+
+環境変数（.env または .env.local）を設定してから、以下を実行してください：
+
+```bash
+npm install
+```
+
+## 実行
 
 ```bash
 # development
-$ npm run start
+npm run start
 
 # watch mode
-$ npm run start:dev
+npm run start:dev
 
 # production mode
-$ npm run start:prod
+npm run start:prod
 ```
 
-## Run tests
+## テスト
 
 ```bash
 # unit tests
-$ npm run test
+npm run test
 
 # e2e tests
-$ npm run test:e2e
+npm run test:e2e
 
 # test coverage
-$ npm run test:cov
+npm run test:cov
 ```
 
-## Deployment
+## デプロイ
 
 When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
 If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm install -g @nestjs/mau
+mau deploy
 ```
 
 With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.

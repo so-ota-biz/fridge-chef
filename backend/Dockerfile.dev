@@ -1,12 +1,15 @@
 FROM node:20-alpine
 
+# ネイティブモジュール（bcrypt 等）ビルド用のツールチェーン
+RUN apk add --no-cache python3 make g++
+
 WORKDIR /app
 
 # package.json と package-lock.json をコピー
 COPY package*.json ./
 
-# 依存関係をインストール
-RUN npm ci
+# 依存関係をインストール（ロックファイル差分を許容）
+RUN npm install --no-audit --no-fund
 
 # Prisma をコピーして生成
 COPY prisma ./prisma/
