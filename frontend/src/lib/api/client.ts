@@ -9,10 +9,17 @@ const emitAuthExpired = () => {
 
 const getCookie = (name: string): string | undefined => {
   if (!isBrowser()) return undefined
-  const value = document.cookie
-    .split('; ')
-    .find((row) => row.startsWith(`${name}=`))
-  return value ? decodeURIComponent(value.split('=')[1]) : undefined
+  
+  try {
+    const value = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith(`${name}=`))
+    return value ? decodeURIComponent(value.split('=')[1]) : undefined
+  } catch (error) {
+    // Cookie解析エラー時はundefinedを返す
+    console.warn(`Failed to parse cookie '${name}':`, error)
+    return undefined
+  }
 }
 
 // APIクライアントのインスタンスを作成

@@ -15,6 +15,7 @@ import { SignUpResponseDto } from '@/auth/dto/sign-up-response.dto'
 import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
 import { Database } from '@/types/database.types'
 import { JwtPayload } from '@/auth/types/jwt-payload.type'
+import { TokenConfigUtil } from '@/common/utils/token-config.util'
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name)
@@ -45,25 +46,8 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {
     // 環境変数から期限を取得（開発環境では短く設定可能）
-    this.ACCESS_TOKEN_MAX_AGE = this.getTokenMaxAge(
-      'ACCESS_TOKEN_MAX_AGE_MS',
-      15 * 60 * 1000, // デフォルト: 15分
-    )
-    this.REFRESH_TOKEN_MAX_AGE = this.getTokenMaxAge(
-      'REFRESH_TOKEN_MAX_AGE_MS',
-      7 * 24 * 60 * 60 * 1000, // デフォルト: 7日
-    )
-  }
-
-  /**
-   * 環境変数からトークン期限を取得
-   */
-  private getTokenMaxAge(envKey: string, defaultValue: number): number {
-    const value = this.configService.get<string>(envKey)
-    if (!value) return defaultValue
-
-    const parsed = parseInt(value, 10)
-    return isNaN(parsed) ? defaultValue : parsed
+    this.ACCESS_TOKEN_MAX_AGE = TokenConfigUtil.getAccessTokenMaxAge(this.configService)
+    this.REFRESH_TOKEN_MAX_AGE = TokenConfigUtil.getRefreshTokenMaxAge(this.configService)
   }
 
   /**

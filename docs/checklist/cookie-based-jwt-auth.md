@@ -124,9 +124,10 @@ URL: http://localhost:3001/dev/auth-test
 7. 自動リフレッシュ（401 エラー発生時）
 
 操作: アクセストークンが期限切れになる状況を作る
-// Console で実行してアクセストークンを削除
-document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-その後、認証が必要な API を呼び出す
+// 注意: accessToken は HttpOnly 設定のため、JavaScript からは削除不可
+// 代わりに開発者ツール > Application > Cookies から手動削除するか、
+// ブラウザの再起動で無効化できます（リフレッシュトークンも同様）
+開発者ツールでの手動削除またはブラウザ再起動後、認証が必要な API を呼び出す
 
 確認点:
 
@@ -154,10 +155,10 @@ document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
 9. セッション期限切れ
 
 操作: リフレッシュトークンも期限切れの状況
-// Console で実行してすべてのトークンを削除
-document.cookie = 'accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-その後、認証が必要な API を呼び出す
+// 注意: accessToken・refreshToken は HttpOnly 設定のため、JavaScript からは削除不可
+// 開発者ツール > Application > Cookies から手動でaccessToken・refreshTokenを削除
+// または、ブラウザを再起動してからアプリに再アクセス
+開発者ツールでの手動削除またはブラウザ再起動後、認証が必要な API を呼び出す
 
 確認点:
 

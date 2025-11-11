@@ -23,7 +23,9 @@ export default function AuthTestPage() {
   const refreshCookieStatus = () => {
     const cookieObj: Record<string, string> = {}
     document.cookie.split(';').forEach((cookie) => {
-      const [key, value] = cookie.trim().split('=')
+      const eqIndex = cookie.indexOf('=')
+      const key = eqIndex > -1 ? cookie.substring(0, eqIndex).trim() : cookie.trim()
+      const value = eqIndex > -1 ? cookie.substring(eqIndex + 1) : ''
       if (key) cookieObj[key] = value || ''
     })
     setCookies(cookieObj)

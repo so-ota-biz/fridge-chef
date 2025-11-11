@@ -22,6 +22,7 @@ import type { RequestWithUser } from '@/auth/types/request-with-user.type'
 import type { Response, CookieOptions } from 'express'
 import { randomBytes } from 'crypto'
 import { CsrfProtection } from '@/common/decorators/csrf-protection.decorator'
+import { TokenConfigUtil } from '@/common/utils/token-config.util'
 
 type RequestWithCookies = Request & { cookies?: Record<string, string | undefined> }
 
@@ -36,32 +37,12 @@ export class AuthController {
     private readonly configService: ConfigService,
   ) {
     // 環境変数から期限を取得（開発環境では短く設定可能）
-    this.ACCESS_TOKEN_MAX_AGE = this.getTokenMaxAge(
-      'ACCESS_TOKEN_MAX_AGE_MS',
-      15 * 60 * 1000, // デフォルト: 15分
-    )
-    this.REFRESH_TOKEN_MAX_AGE = this.getTokenMaxAge(
-      'REFRESH_TOKEN_MAX_AGE_MS',
-      7 * 24 * 60 * 60 * 1000, // デフォルト: 7日
-    )
-    this.CSRF_TOKEN_MAX_AGE = this.getTokenMaxAge(
-      'CSRF_TOKEN_MAX_AGE_MS',
-      24 * 60 * 60 * 1000, // デフォルト: 24時間
-    )
+    this.ACCESS_TOKEN_MAX_AGE = TokenConfigUtil.getAccessTokenMaxAge(this.configService)
+    this.REFRESH_TOKEN_MAX_AGE = TokenConfigUtil.getRefreshTokenMaxAge(this.configService)
+    this.CSRF_TOKEN_MAX_AGE = TokenConfigUtil.getCsrfTokenMaxAge(this.configService)
   }
 
   private readonly logger = new Logger(AuthController.name)
-
-  private getTokenMaxAge(envKey: string, defaultValue: number): number {
-    const envValue = this.configService.get<string>(envKey)
-    if (envValue) {
-      const parsed = parseInt(envValue, 10)
-      if (!isNaN(parsed) && parsed > 0) {
-        return parsed
-      }
-    }
-    return defaultValue
-  }
 
   private generateCsrfToken(): string {
     return randomBytes(32).toString('hex')
