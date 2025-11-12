@@ -1,11 +1,13 @@
 import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
-import { AppController } from './app.controller'
-import { AppService } from './app.service'
+import { AppController } from '@/app.controller'
+import { AppService } from '@/app.service'
 import { AuthModule } from '@/auth/auth.module'
 import { PrismaModule } from '@/prisma/prisma.module'
-import { UsersModule } from './users/users.module'
+import { UsersModule } from '@/users/users.module'
 import { CsrfMiddleware } from '@/common/middleware/csrf.middleware'
+import { CategoriesModule } from '@/categories/categories.module'
+import { IngredientsModule } from '@/ingredients/ingredients.module'
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { CsrfMiddleware } from '@/common/middleware/csrf.middleware'
     PrismaModule,
     AuthModule,
     UsersModule,
+    CategoriesModule,
+    IngredientsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
