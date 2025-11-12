@@ -13,15 +13,15 @@ import {
   HttpStatus,
   Delete,
 } from '@nestjs/common'
-import { UsersService } from './users.service'
+import { UsersService } from '@/users/users.service'
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
 import type { RequestWithUser } from '@/auth/types/request-with-user.type'
-import { User, UpdateUserResponse } from './types/user.type'
-import { UpdateUserDto } from './dto/update-user.dto'
-import { UploadAvatarResponse } from './types/upload-avatar.type'
+import { User, UpdateUserResponse } from '@/users/types/user.type'
+import { UpdateUserDto } from '@/users/dto/update-user.dto'
+import { UploadAvatarResponse } from '@/users/types/upload-avatar.type'
 import { FileInterceptor } from '@nestjs/platform-express'
-import { ChangePasswordDto } from './dto/change-password.dto'
-import { DeleteAccountDto } from './dto/delete-account.dto'
+import { ChangePasswordDto } from '@/users/dto/change-password.dto'
+import { DeleteAccountDto } from '@/users/dto/delete-account.dto'
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
