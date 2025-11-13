@@ -8,6 +8,8 @@ import { UsersModule } from '@/users/users.module'
 import { CsrfMiddleware } from '@/common/middleware/csrf.middleware'
 import { CategoriesModule } from '@/categories/categories.module'
 import { IngredientsModule } from '@/ingredients/ingredients.module'
+import { AiModule } from './ai/ai.module'
+import { RecipesModule } from './recipes/recipes.module'
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { IngredientsModule } from '@/ingredients/ingredients.module'
     UsersModule,
     CategoriesModule,
     IngredientsModule,
+    AiModule,
+    RecipesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
