@@ -15,7 +15,110 @@ model User {
   avatarUrl   String?  @map("avatar_url")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  records     Record[]
 
   @@index([displayName], map: "idx_users_display_name")
   @@map("users")
+}
+
+model Category {
+  id          Int          @id @default(autoincrement())
+  name        String       @db.VarChar(100)
+  icon        String       @db.VarChar(50)
+  sortOrder   Int          @map("sort_order")
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  ingredients Ingredient[]
+
+  @@index([sortOrder], map: "idx_categories_sort_order")
+  @@map("categories")
+}
+
+model Ingredient {
+  id         Int       @id @default(autoincrement())
+  name       String    @db.VarChar(100)
+  categoryId Int       @map("category_id")
+  icon       String?   @db.VarChar(50)
+  sortOrder  Int       @map("sort_order")
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  portions   Portion[]
+
+  @@index([categoryId], map: "idx_ingredients_category_id")
+  @@index([sortOrder], map: "idx_ingredients_sort_order")
+  @@map("ingredients")
+}
+
+model Recipe {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(255)
+  description String?
+  cookingTime Int       @map("cooking_time")
+  difficulty  Int
+  servings    Int
+  imageUrl    String?   @map("image_url")
+  imagePrompt String?   @map("image_prompt")
+  genre       Int
+  calories    Int?
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  portions    Portion[]
+  records     Record[]
+  steps       Step[]
+
+  @@index([genre], map: "idx_recipes_genre")
+  @@index([difficulty], map: "idx_recipes_difficulty")
+  @@index([cookingTime], map: "idx_recipes_cooking_time")
+  @@map("recipes")
+}
+
+model Portion {
+  id           Int         @id @default(autoincrement())
+  recipeId     Int         @map("recipe_id")
+  ingredientId Int?        @map("ingredient_id")
+  name         String?     @db.VarChar(100)
+  amount       String      @db.VarChar(50)
+  createdAt    DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  ingredient   Ingredient? @relation(fields: [ingredientId], references: [id])
+  recipe       Recipe      @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId], map: "idx_portions_recipe_id")
+  @@index([ingredientId], map: "idx_portions_ingredient_id")
+  @@map("portions")
+}
+
+model Step {
+  id          Int      @id @default(autoincrement())
+  recipeId    Int      @map("recipe_id")
+  stepNumber  Int      @map("step_number")
+  instruction String
+  imageUrl    String?  @map("image_url")
+  tips        String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  recipe      Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@index([recipeId, stepNumber], map: "idx_steps_recipe_id_step_number")
+  @@map("steps")
+}
+
+model Record {
+  id           Int      @id @default(autoincrement())
+  userId       String   @map("user_id") @db.Uuid
+  recipeId     Int      @map("recipe_id")
+  userImageUrl String?  @map("user_image_url")
+  rating       Int?
+  memo         String?
+  cookedAt     DateTime @map("cooked_at") @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  recipe       Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_records_user_id")
+  @@index([recipeId], map: "idx_records_recipe_id")
+  @@index([cookedAt], map: "idx_records_cooked_at")
+  @@map("records")
 }

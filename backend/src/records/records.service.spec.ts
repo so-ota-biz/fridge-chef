@@ -1,39 +1,38 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { UsersService } from '@/users/users.service'
+import { RecordsService } from '@/records/records.service'
 import { PrismaService } from '@/prisma/prisma.service'
-import { ConfigService } from '@nestjs/config'
 
-describe('UsersService', () => {
-  let service: UsersService
+describe('RecordsService', () => {
+  let service: RecordsService
+  let prismaService: PrismaService
 
   const mockPrismaService = {
-    user: {
+    record: {
+      create: jest.fn(),
+      findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
     },
-  }
-
-  const mockConfigService = {
-    get: jest.fn(),
+    recipe: {
+      findUnique: jest.fn(),
+    },
   }
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        UsersService,
+        RecordsService,
         {
           provide: PrismaService,
           useValue: mockPrismaService,
         },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
-        },
       ],
     }).compile()
 
-    service = module.get<UsersService>(UsersService)
+    service = module.get<RecordsService>(RecordsService)
+    prismaService = module.get<PrismaService>(PrismaService)
   })
 
   it('should be defined', () => {

@@ -1,42 +1,41 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { UsersService } from '@/users/users.service'
+import { RecordsController } from '@/records/records.controller'
+import { RecordsService } from '@/records/records.service'
 import { PrismaService } from '@/prisma/prisma.service'
-import { ConfigService } from '@nestjs/config'
 
-describe('UsersService', () => {
-  let service: UsersService
+describe('RecordsController', () => {
+  let controller: RecordsController
 
   const mockPrismaService = {
-    user: {
+    record: {
+      create: jest.fn(),
+      findMany: jest.fn(),
       findUnique: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
     },
-  }
-
-  const mockConfigService = {
-    get: jest.fn(),
+    recipe: {
+      findUnique: jest.fn(),
+    },
   }
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      controllers: [RecordsController],
       providers: [
-        UsersService,
+        RecordsService,
         {
           provide: PrismaService,
           useValue: mockPrismaService,
         },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
-        },
       ],
     }).compile()
 
-    service = module.get<UsersService>(UsersService)
+    controller = module.get<RecordsController>(RecordsController)
   })
 
   it('should be defined', () => {
-    expect(service).toBeDefined()
+    expect(controller).toBeDefined()
   })
 })
