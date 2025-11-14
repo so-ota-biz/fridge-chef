@@ -1,48 +1,49 @@
-# ベースイメージ
+﻿## Base image
 FROM node:20-alpine AS base
 
-# 依存関係インストール用ステージ
+## Dependencies stage
 FROM base AS deps
 WORKDIR /app
 
-# package.json と package-lock.json をコピー
+# Copy package manifests and Prisma schema
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# ネイティブモジュール（bcrypt 等）ビルド用のツールチェーン
+# Toolchain for native modules (e.g. bcrypt, sharp)
 RUN apk add --no-cache python3 make g++
 
-# 依存関係をインストール
+# Install dependencies
 RUN npm ci
 
-# Prisma Client を生成
+# Generate Prisma Client
 RUN npx prisma generate
 
-# ビルド用ステージ
+## Build stage
 FROM base AS builder
 WORKDIR /app
 
-# 依存関係をコピー
+# Bring in installed modules and source
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# ビルド
+# Build NestJS
 RUN npm run build
 
-# 本番用ステージ
-FROM base AS runner
+## Runtime stage
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# 本番環境設定
+# Production env
 ENV NODE_ENV=production
 
-# 必要なファイルのみコピー
+# Copy only necessary files
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/prisma ./prisma
 
-# ポート公開
+# Expose API port
 EXPOSE 3000
 
-# アプリケーション起動
-CMD ["node", "dist/main"]
+# Apply Prisma migrations, then start the app
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main.js"]

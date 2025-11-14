@@ -16,6 +16,7 @@ import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
 import { Database } from '@/types/database.types'
 import { JwtPayload } from '@/auth/types/jwt-payload.type'
 import { TokenConfigUtil } from '@/common/utils/token-config.util'
+
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name)
@@ -65,8 +66,7 @@ export class AuthService {
         email,
         password,
         options: {
-          //TODO
-          //emailRedirectTo: `${frontendUrl}/auth/callback`, // ← 環境変数を使用
+          ...(frontendUrl ? { emailRedirectTo: `${frontendUrl}/auth/signin?signup=success` } : {}),
         },
       })
 
@@ -250,7 +250,7 @@ export class AuthService {
       throw new UnauthorizedException('メールアドレスまたはパスワードが正しくありません')
     }
 
-    // メール未確認エラーを追加
+    // メール未確認エラー
     if (errorMessage.includes('Email not confirmed')) {
       throw new UnauthorizedException(
         'メールアドレスが確認されていません。受信トレイを確認し、確認リンクをクリックしてください。',

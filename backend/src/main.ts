@@ -47,5 +47,5 @@ async function bootstrap() {
   await app.listen(port)
   const appLogger = new Logger('Application')
   appLogger.log(`application is running on: http://localhost:${port}`)
-  }
-  void bootstrap()
+}
+void bootstrap()
