@@ -39,7 +39,7 @@ const DashboardPage = () => {
                 </Text>
                 <Text
                   size="md"
-                  sx={{
+                  style={{
                     fontFamily: 'monospace',
                     fontSize: '0.9em',
                   }}

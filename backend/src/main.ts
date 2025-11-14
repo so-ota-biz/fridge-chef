@@ -43,8 +43,9 @@ async function bootstrap() {
     }),
   )
 
-  await app.listen(3000)
+  const port = Number(process.env.PORT ?? 3000)
+  await app.listen(port)
   const appLogger = new Logger('Application')
-  appLogger.log('application is running on: http://localhost:3000')
-}
-void bootstrap()
+  appLogger.log(`application is running on: http://localhost:${port}`)
+  }
+  void bootstrap()
