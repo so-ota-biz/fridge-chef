@@ -10,6 +10,27 @@ export class RecordsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * 調理記録の存在と所有権を確認
+   * @throws NotFoundException - レコードが存在しない場合
+   * @throws ForbiddenException - ユーザーが所有者でない場合
+   */
+  private async verifyOwnership(userId: string, recordId: number): Promise<RecordResponse> {
+    const record = await this.prisma.record.findUnique({
+      where: { id: recordId },
+    })
+
+    if (!record) {
+      throw new NotFoundException('Record not found')
+    }
+
+    if (record.userId !== userId) {
+      throw new ForbiddenException('You can only access your own records')
+    }
+
+    return record
+  }
+
+  /**
    * 調理記録を作成
    */
   async create(userId: string, dto: CreateRecordDto): Promise<RecordResponse> {
@@ -65,36 +86,14 @@ export class RecordsService {
    * 調理記録詳細を取得
    */
   async findOne(userId: string, id: number): Promise<RecordResponse> {
-    const record = await this.prisma.record.findUnique({
-      where: { id },
-    })
-
-    if (!record) {
-      throw new NotFoundException('Record not found')
-    }
-
-    if (record.userId !== userId) {
-      throw new ForbiddenException('You can only view your own records')
-    }
-
-    return record
+    return await this.verifyOwnership(userId, id)
   }
 
   /**
    * 調理記録を更新
    */
   async update(userId: string, id: number, dto: UpdateRecordDto): Promise<RecordResponse> {
-    const record = await this.prisma.record.findUnique({
-      where: { id },
-    })
-
-    if (!record) {
-      throw new NotFoundException('Record not found')
-    }
-
-    if (record.userId !== userId) {
-      throw new ForbiddenException('You can only update your own records')
-    }
+    await this.verifyOwnership(userId, id)
 
     return await this.prisma.record.update({
       where: { id },
@@ -111,17 +110,7 @@ export class RecordsService {
    * 調理記録を削除
    */
   async remove(userId: string, id: number): Promise<void> {
-    const record = await this.prisma.record.findUnique({
-      where: { id },
-    })
-
-    if (!record) {
-      throw new NotFoundException('Record not found')
-    }
-
-    if (record.userId !== userId) {
-      throw new ForbiddenException('You can only delete your own records')
-    }
+    await this.verifyOwnership(userId, id)
 
     await this.prisma.record.delete({
       where: { id },

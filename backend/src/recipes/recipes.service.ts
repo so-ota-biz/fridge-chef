@@ -32,49 +32,49 @@ export class RecipesService {
     )
     const imageUrls = await Promise.all(imageGenerationTasks)
 
-    // 2-2. 生成された3つのレシピをDBに保存
-    const recipeCreationTasks = aiResult.recipes.map((aiRecipe, index) =>
-      this.prisma.recipe.create({
-        data: {
-          title: aiRecipe.title,
-          description: aiRecipe.description,
-          cookingTime: aiRecipe.cookingTime,
-          difficulty: aiRecipe.difficulty,
-          servings: aiRecipe.servings,
-          imageUrl: imageUrls[index],
-          imagePrompt: aiRecipe.imagePrompt,
-          genre: aiRecipe.genre,
-          calories: aiRecipe.calories,
-          // 材料を作成
-          portions: {
-            create: aiRecipe.portions.map((portion) => ({
-              // マスタに存在する食材かチェック（簡易版：名前で検索）
-              ingredientId: null, // TODO: マスタ検索機能を追加
-              name: portion.ingredientName,
-              amount: portion.amount,
-            })),
-          },
-          // 手順を作成
-          steps: {
-            create: aiRecipe.steps.map((step) => ({
-              stepNumber: step.stepNumber,
-              instruction: step.instruction,
-              tips: step.tips || null,
-            })),
-          },
-        },
-        include: {
-          portions: true,
-          steps: {
-            orderBy: {
-              stepNumber: 'asc',
+    // 2-2. 生成された3つのレシピをトランザクション内でDBに保存
+    const savedRecipes = await this.prisma.$transaction(
+      aiResult.recipes.map((aiRecipe, index) =>
+        this.prisma.recipe.create({
+          data: {
+            title: aiRecipe.title,
+            description: aiRecipe.description,
+            cookingTime: aiRecipe.cookingTime,
+            difficulty: aiRecipe.difficulty,
+            servings: aiRecipe.servings,
+            imageUrl: imageUrls[index],
+            imagePrompt: aiRecipe.imagePrompt,
+            genre: aiRecipe.genre,
+            calories: aiRecipe.calories,
+            // 材料を作成
+            portions: {
+              create: aiRecipe.portions.map((portion) => ({
+                // マスタに存在する食材かチェック（簡易版：名前で検索）
+                ingredientId: null, // TODO: マスタ検索機能を追加
+                name: portion.ingredientName,
+                amount: portion.amount,
+              })),
+            },
+            // 手順を作成
+            steps: {
+              create: aiRecipe.steps.map((step) => ({
+                stepNumber: step.stepNumber,
+                instruction: step.instruction,
+                tips: step.tips || null,
+              })),
             },
           },
-        },
-      }),
+          include: {
+            portions: true,
+            steps: {
+              orderBy: {
+                stepNumber: 'asc',
+              },
+            },
+          },
+        }),
+      ),
     )
-
-    const savedRecipes = await Promise.all(recipeCreationTasks)
 
     return {
       recipes: savedRecipes,

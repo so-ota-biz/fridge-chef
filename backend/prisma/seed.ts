@@ -34,7 +34,11 @@ const main = async (): Promise<void> => {
   for (const category of categories) {
     await prisma.category.upsert({
       where: { id: category.id },
-      update: {},
+      update: {
+        name: category.name,
+        icon: category.icon,
+        sortOrder: category.sortOrder,
+      },
       create: category,
     })
   }
@@ -111,7 +115,11 @@ const main = async (): Promise<void> => {
   for (const ingredient of ingredients) {
     await prisma.ingredient.upsert({
       where: { id: ingredient.id },
-      update: {},
+      update: {
+        name: ingredient.name,
+        categoryId: ingredient.categoryId,
+        sortOrder: ingredient.sortOrder,
+      },
       create: {
         id: ingredient.id,
         name: ingredient.name,
