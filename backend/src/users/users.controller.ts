@@ -88,7 +88,6 @@ export class UsersController {
    * DELETE /users/me
    */
   @Delete('me')
-  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteAccount(
     @Request() req: RequestWithUser,

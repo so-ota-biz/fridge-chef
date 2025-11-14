@@ -45,6 +45,7 @@ export class AiService {
   private readonly openaiApiKey: string
   private readonly openaiChatUrl: string
   private readonly openaiImageUrl: string
+  private readonly gptModel: string
   private _supabaseAdmin: SupabaseClient<Database> | null = null
 
   private get supabaseAdmin(): SupabaseClient<Database> {
@@ -66,6 +67,7 @@ export class AiService {
 
   constructor(private readonly configService: ConfigService) {
     this.openaiApiKey = this.configService.get<string>('OPENAI_API_KEY') || ''
+    this.gptModel = this.configService.get<string>('OPENAI_GPT_MODEL') || 'gpt-4o'
 
     const baseUrl =
       this.configService.get<string>('OPENAI_API_BASE_URL') || 'https://api.openai.com/v1'
@@ -92,7 +94,7 @@ export class AiService {
       const response = await axios.post<OpenAIChatResponse>(
         this.openaiChatUrl,
         {
-          model: 'gpt-4o',
+          model: this.gptModel, // 環境変数から取得
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userPrompt },
@@ -139,7 +141,7 @@ export class AiService {
   }
 
   /**
-   * DALL-E 3で料理画像を生成（Base64） → Supabase Storageに保存
+   * DALL-E 2で料理画像を生成（Base64） → Supabase Storageに保存
    */
   async generateRecipeImage(imagePrompt: string): Promise<string | null> {
     if (!this.openaiApiKey) {
@@ -147,16 +149,15 @@ export class AiService {
     }
 
     try {
-      // 1. DALL-E 3で画像生成（Base64形式で取得）
+      // 1. DALL-E 2で画像生成（Base64形式、512x512で直接生成）
       const response = await axios.post<DalleBase64Response>(
         this.openaiImageUrl,
         {
-          model: 'dall-e-3',
+          model: 'dall-e-2',
           prompt: imagePrompt,
           n: 1,
-          size: '1024x1024',
-          quality: 'standard',
-          response_format: 'b64_json', // Base64形式で取得
+          size: '512x512',
+          response_format: 'b64_json',
         },
         {
           headers: {
@@ -168,33 +169,28 @@ export class AiService {
 
       const base64Image = response.data.data?.[0]?.b64_json
       if (!base64Image) {
-        console.error('No Base64 image data from DALL-E')
+        console.error('[IMAGE GEN] No Base64 image data from DALL-E 2')
         return null
       }
 
       // 2. Base64をBufferに変換
       const imageBuffer = Buffer.from(base64Image, 'base64')
 
-      // 3. 画像を512x512にリサイズして圧縮
-      const resizedImageBuffer: Buffer = await sharp(imageBuffer)
-        .resize(512, 512, {
-          fit: 'cover', // アスペクト比を保ったまま中央クロップ
-        })
-        .webp({ quality: 60 }) // WebP形式に変換（60%品質）
-        .toBuffer()
+      // 3. WebP形式に変換（品質60%）
+      const webpImageBuffer: Buffer = await sharp(imageBuffer).webp({ quality: 60 }).toBuffer()
 
       // 4. Supabase Storageにアップロード
       const fileName = `recipes/${Date.now()}-${Math.random().toString(36).substring(7)}.webp`
       const { error: uploadError } = await this.supabaseAdmin.storage
         .from('recipe-images')
-        .upload(fileName, resizedImageBuffer, {
+        .upload(fileName, webpImageBuffer, {
           contentType: 'image/webp',
-          cacheControl: '31536000', // 1年間キャッシュ
+          cacheControl: '31536000',
           upsert: false,
         })
 
       if (uploadError) {
-        console.error('Supabase upload error:', uploadError)
+        console.error('[IMAGE GEN] Supabase upload error:', uploadError)
         return null
       }
 
@@ -204,11 +200,10 @@ export class AiService {
       return publicUrl
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error('DALL-E API error:', error.response?.data)
+        console.error('[IMAGE GEN] DALL-E 2 API error:', error.response?.data)
       } else {
-        console.error('Error generating and uploading image:', error)
+        console.error('[IMAGE GEN] Error generating and uploading image:', error)
       }
-      // 画像生成失敗時はnullを返す（レシピ自体は使える）
       return null
     }
   }

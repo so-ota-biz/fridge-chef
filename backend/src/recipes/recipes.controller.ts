@@ -16,17 +16,15 @@ import { GenerateRecipeResponseDto } from '@/recipes/dto/generate-recipe-respons
 import { RecipeResponseDto } from '@/recipes/dto/recipe-response.dto'
 
 @Controller('recipes')
+@UseGuards(JwtAuthGuard)
 export class RecipesController {
   constructor(private readonly recipesService: RecipesService) {}
 
   /**
    * レシピを3つ生成
    * POST /recipes/generate
-   *
-   * 認証必須
    */
   @Post('generate')
-  @UseGuards(JwtAuthGuard)
   async generate(
     @Body(ValidationPipe) dto: GenerateRecipeRequestDto,
   ): Promise<GenerateRecipeResponseDto> {
@@ -45,11 +43,8 @@ export class RecipesController {
   /**
    * レシピを削除
    * DELETE /recipes/:id
-   *
-   * 認証必須
    */
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
   async remove(@Param('id', ParseIntPipe) id: number): Promise<void> {
     return this.recipesService.remove(id)
   }
