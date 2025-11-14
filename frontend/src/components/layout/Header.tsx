@@ -37,7 +37,7 @@ export const Header = ({ opened, toggle }: HeaderProps) => {
             <Group gap="sm">
               <Avatar
                 src={user?.avatarUrl}
-                alt={user?.displayName || user?.email}
+                alt={user?.displayName ?? user?.email ?? ''}
                 radius="xl"
                 size="md"
               />
