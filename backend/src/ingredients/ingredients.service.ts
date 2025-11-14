@@ -13,11 +13,12 @@ export class IngredientsService {
    */
   async findAll(categoryId?: number): Promise<IngredientResponseDto[]> {
     const ingredients = await this.prisma.ingredient.findMany({
-      where: categoryId
-        ? {
-            categoryId: categoryId,
-          }
-        : undefined,
+      where:
+        categoryId !== undefined
+          ? {
+              categoryId,
+            }
+          : undefined,
       include: {
         category: true,
       },
