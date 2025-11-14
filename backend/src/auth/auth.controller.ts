@@ -21,7 +21,6 @@ import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
 import type { RequestWithUser } from '@/auth/types/request-with-user.type'
 import type { Response, CookieOptions } from 'express'
 import { randomBytes } from 'crypto'
-import { CsrfProtection } from '@/common/decorators/csrf-protection.decorator'
 import { TokenConfigUtil } from '@/common/utils/token-config.util'
 
 type RequestWithCookies = Request & { cookies?: Record<string, string | undefined> }
@@ -134,7 +133,6 @@ export class AuthController {
    * POST /auth/refresh
    */
   @Post('refresh')
-  @CsrfProtection()
   @HttpCode(HttpStatus.OK)
   async refreshToken(
     @Request() req: RequestWithCookies,

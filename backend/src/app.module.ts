@@ -25,6 +25,7 @@ export class AppModule implements NestModule {
       .apply(CsrfMiddleware)
       .exclude(
         { path: 'auth/signin', method: RequestMethod.POST },
+        { path: 'auth/signup', method: RequestMethod.POST },
         { path: 'auth/csrf', method: RequestMethod.GET },
       )
       .forRoutes({ path: '*', method: RequestMethod.ALL })
