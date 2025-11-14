@@ -14,6 +14,7 @@ describe('RecipesService', () => {
       findUnique: jest.fn(),
       delete: jest.fn(),
     },
+    $transaction: jest.fn((promises) => Promise.all(promises)),
   }
 
   const mockAiService = {

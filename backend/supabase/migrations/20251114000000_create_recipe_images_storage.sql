@@ -5,7 +5,7 @@ VALUES (
   'recipe-images',
   true, -- パブリックアクセス可能
   5242880, -- 5MB制限
-  ARRAY['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+  ARRAY['image/jpeg', 'image/png', 'image/webp']
 );
 
 -- Allow authenticated users to upload recipe images
