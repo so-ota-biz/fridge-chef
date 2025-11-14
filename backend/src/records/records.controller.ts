@@ -10,7 +10,6 @@ import {
   ParseIntPipe,
   Request,
   UseGuards,
-  ValidationPipe,
 } from '@nestjs/common'
 import { RecordsService } from '@/records/records.service'
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
@@ -32,7 +31,7 @@ export class RecordsController {
   @Post()
   async create(
     @Request() req: RequestWithUser,
-    @Body(ValidationPipe) dto: CreateRecordDto,
+    @Body() dto: CreateRecordDto,
   ): Promise<RecordResponse> {
     return this.recordsService.create(req.user.id, dto)
   }
@@ -44,7 +43,7 @@ export class RecordsController {
   @Get()
   async findAll(
     @Request() req: RequestWithUser,
-    @Query(ValidationPipe) query: QueryRecordsDto,
+    @Query() query: QueryRecordsDto,
   ): Promise<RecordsListResponse> {
     return this.recordsService.findAll(req.user.id, query)
   }
@@ -69,7 +68,7 @@ export class RecordsController {
   async update(
     @Request() req: RequestWithUser,
     @Param('id', ParseIntPipe) id: number,
-    @Body(ValidationPipe) dto: UpdateRecordDto,
+    @Body() dto: UpdateRecordDto,
   ): Promise<RecordResponse> {
     return this.recordsService.update(req.user.id, id, dto)
   }
