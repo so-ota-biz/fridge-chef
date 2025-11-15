@@ -110,7 +110,13 @@ jobs:
         env:
           HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          curl -sS -X POST "$HOOK"
+          ts=$(date -Iseconds)
+          echo "Triggering Render hook at $ts for $GITHUB_SHA"
+          code=$(curl -sS -o /tmp/render_hook_out.txt -w "%{http_code}" -X POST "$HOOK?sha=$GITHUB_SHA&ref=$GITHUB_REF")
+          echo "Render hook HTTP status: $code"
+          echo "Render hook response:"
+          cat /tmp/render_hook_out.txt || true
+          if [ "$code" -ge 400 ]; then exit 1; fi
 
   deploy-frontend-after-backend:
     name: Trigger Vercel Deploy (after BE)
@@ -128,7 +134,13 @@ jobs:
         env:
           HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
-          curl -sS -X POST "$HOOK"
+          ts=$(date -Iseconds)
+          echo "Triggering Vercel hook at $ts for $GITHUB_SHA"
+          code=$(curl -sS -o /tmp/vercel_hook_out.txt -w "%{http_code}" -X POST "$HOOK?sha=$GITHUB_SHA&ref=$GITHUB_REF")
+          echo "Vercel hook HTTP status: $code"
+          echo "Vercel hook response:"
+          cat /tmp/vercel_hook_out.txt || true
+          if [ "$code" -ge 400 ]; then exit 1; fi
 
   deploy-frontend-only:
     name: Trigger Vercel Deploy (FE only)
@@ -146,4 +158,10 @@ jobs:
         env:
           HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
         run: |
-          curl -sS -X POST "$HOOK"
+          ts=$(date -Iseconds)
+          echo "Triggering Vercel hook at $ts for $GITHUB_SHA (FE only)"
+          code=$(curl -sS -o /tmp/vercel_hook_out.txt -w "%{http_code}" -X POST "$HOOK?sha=$GITHUB_SHA&ref=$GITHUB_REF")
+          echo "Vercel hook HTTP status: $code"
+          echo "Vercel hook response:"
+          cat /tmp/vercel_hook_out.txt || true
+          if [ "$code" -ge 400 ]; then exit 1; fi
