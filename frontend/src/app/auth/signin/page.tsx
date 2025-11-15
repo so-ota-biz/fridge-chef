@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -33,7 +34,7 @@ type SignInFormValues = z.infer<typeof signInSchema>
 // ========================================
 // サインインページコンポーネント
 // ========================================
-const SignInPage = () => {
+const SignInContent = () => {
   const searchParams = useSearchParams()
   const signupSuccess = searchParams.get('signup') === 'success'
   const signInMutation = useSignIn()
@@ -128,4 +129,10 @@ const SignInPage = () => {
   )
 }
 
-export default SignInPage
+export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInContent />
+    </Suspense>
+  )
+}

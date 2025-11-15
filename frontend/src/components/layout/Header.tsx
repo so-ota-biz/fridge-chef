@@ -18,6 +18,9 @@ export const Header = ({ opened, toggle }: HeaderProps) => {
     signOut()
   }
 
+  const display = user?.displayName?.trim()
+  const alt = display && display.length > 0 ? display : (user?.email ?? '')
+
   return (
     <Group h="100%" px="md" justify="space-between">
       {/* 左側: ハンバーガーメニュー + ロゴ */}
@@ -37,7 +40,7 @@ export const Header = ({ opened, toggle }: HeaderProps) => {
             <Group gap="sm">
               <Avatar
                 src={user?.avatarUrl}
-                alt={user?.displayName || user?.email}
+                alt={alt}
                 radius="xl"
                 size="md"
               />

@@ -8,3 +8,8 @@ dist/
 node_modules/
 build/
 **/generated/prisma/
+
+# Ignore compiled Prisma seed artifacts
+prisma/**/*.js
+prisma/**/*.d.ts
+prisma/**/*.js.map

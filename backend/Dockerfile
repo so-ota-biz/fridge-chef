@@ -1,15 +1,15 @@
 # ベースイメージ
 FROM node:20-alpine AS base
 
-# 依存関係インストール用ステージ
+# 依存関係ステージ
 FROM base AS deps
 WORKDIR /app
 
-# package.json と package-lock.json をコピー
+# package.json と Prisma スキーマをコピー
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# ネイティブモジュール（bcrypt 等）ビルド用のツールチェーン
+# ネイティブモジュール用ビルドツール (bcrypt, sharp 等)
 RUN apk add --no-cache python3 make g++
 
 # 依存関係をインストール
@@ -18,31 +18,33 @@ RUN npm ci
 # Prisma Client を生成
 RUN npx prisma generate
 
-# ビルド用ステージ
+# ビルドステージ
 FROM base AS builder
 WORKDIR /app
 
-# 依存関係をコピー
+# 依存関係とソースをコピー
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# ビルド
+# NestJS をビルド
 RUN npm run build
 
-# 本番用ステージ
-FROM base AS runner
+# ランタイムステージ
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# 本番環境設定
+# 本番環境変数
 ENV NODE_ENV=production
 
 # 必要なファイルのみコピー
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/prisma ./prisma
 
-# ポート公開
+# API ポートを公開
 EXPOSE 3000
 
-# アプリケーション起動
-CMD ["node", "dist/main"]
+# アプリ起動（DBマイグレーションはCIのSupabase CLIで適用）
+CMD ["node", "dist/main.js"]
+
