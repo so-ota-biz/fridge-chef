@@ -112,10 +112,12 @@ jobs:
         run: |
           ts=$(date -Iseconds)
           echo "Triggering Render hook at $ts for $GITHUB_SHA"
-          code=$(curl -sS -o /tmp/render_hook_out.txt -w "%{http_code}" -X POST "$HOOK?sha=$GITHUB_SHA&ref=$GITHUB_REF")
+          code=$(curl -sS -o /tmp/render_body.txt -D /tmp/render_headers.txt -w "%{http_code}" -X POST "$HOOK")
           echo "Render hook HTTP status: $code"
-          echo "Render hook response:"
-          cat /tmp/render_hook_out.txt || true
+          echo "Render hook response headers:"
+          sed -n '1,200p' /tmp/render_headers.txt || true
+          echo "Render hook response body:"
+          sed -n '1,200p' /tmp/render_body.txt || true
           if [ "$code" -ge 400 ]; then exit 1; fi
 
   deploy-frontend-after-backend:
@@ -136,10 +138,12 @@ jobs:
         run: |
           ts=$(date -Iseconds)
           echo "Triggering Vercel hook at $ts for $GITHUB_SHA"
-          code=$(curl -sS -o /tmp/vercel_hook_out.txt -w "%{http_code}" -X POST "$HOOK?sha=$GITHUB_SHA&ref=$GITHUB_REF")
+          code=$(curl -sS -o /tmp/vercel_body.txt -D /tmp/vercel_headers.txt -w "%{http_code}" -X POST "$HOOK")
           echo "Vercel hook HTTP status: $code"
-          echo "Vercel hook response:"
-          cat /tmp/vercel_hook_out.txt || true
+          echo "Vercel hook response headers:"
+          sed -n '1,200p' /tmp/vercel_headers.txt || true
+          echo "Vercel hook response body:"
+          sed -n '1,200p' /tmp/vercel_body.txt || true
           if [ "$code" -ge 400 ]; then exit 1; fi
 
   deploy-frontend-only:
@@ -160,8 +164,10 @@ jobs:
         run: |
           ts=$(date -Iseconds)
           echo "Triggering Vercel hook at $ts for $GITHUB_SHA (FE only)"
-          code=$(curl -sS -o /tmp/vercel_hook_out.txt -w "%{http_code}" -X POST "$HOOK?sha=$GITHUB_SHA&ref=$GITHUB_REF")
+          code=$(curl -sS -o /tmp/vercel_body.txt -D /tmp/vercel_headers.txt -w "%{http_code}" -X POST "$HOOK")
           echo "Vercel hook HTTP status: $code"
-          echo "Vercel hook response:"
-          cat /tmp/vercel_hook_out.txt || true
+          echo "Vercel hook response headers:"
+          sed -n '1,200p' /tmp/vercel_headers.txt || true
+          echo "Vercel hook response body:"
+          sed -n '1,200p' /tmp/vercel_body.txt || true
           if [ "$code" -ge 400 ]; then exit 1; fi
