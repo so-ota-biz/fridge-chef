@@ -57,6 +57,18 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
 
+      - name: Sanitize Supabase config for CI
+        run: |
+          # Backup original config if present
+          if [ -f config.toml ]; then mv config.toml config.toml.bak; fi
+          # Write a minimal config compatible with CLI for remote migrations
+          cat > config.toml << 'EOF'
+          project_id = "ci"
+
+          [db]
+          major_version = 17
+          EOF
+
       - name: Link Supabase project
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
@@ -73,6 +85,11 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           supabase migration up
+
+      - name: Restore Supabase config (cleanup)
+        if: always()
+        run: |
+          if [ -f config.toml.bak ]; then mv -f config.toml.bak config.toml; fi
 
   deploy-backend:
     name: Trigger Render Deploy
