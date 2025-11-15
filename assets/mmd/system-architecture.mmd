@@ -1,0 +1,47 @@
+graph TB
+    subgraph "Client Tier"
+        A[Web Browser]
+        B[Mobile Browser]
+    end
+    
+    subgraph "Frontend (Vercel/AWS S3)"
+        D[Next.js SPA]
+        E[Static Assets]
+    end
+    
+    subgraph "Backend (Render)"
+        F[NestJS API Server]
+        G[Recipe Service]
+        H[AI Integration Service]
+    end
+    
+    subgraph "All-in-One Backend (Supabase)"
+        P[Supabase Auth]
+        K[(PostgreSQL)]
+        M[File Storage]
+    end
+    
+    subgraph "External APIs (MVP Only)"
+        O[OpenAI GPT-4 API]
+    end
+    
+    A --> D
+    B --> D
+    D --> F
+    
+    F --> G
+    F --> H
+    
+    F --> P
+    F --> K
+    F --> M
+    H --> O
+    
+    style A fill:#e3f2fd
+    style B fill:#e3f2fd
+    style D fill:#e8f5e8
+    style F fill:#fff8e1
+    style P fill:#e1f5fe
+    style K fill:#fce4ec
+    style M fill:#f3e5f5
+    style O fill:#e0f2f1

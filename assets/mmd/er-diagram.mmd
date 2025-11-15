@@ -1,0 +1,100 @@
+erDiagram
+    %% Supabase auth schema (managed by Supabase)
+    %% Note: Application-level reference only, no DB-level FK constraint
+    users ||--o{ records : "has"
+    recipes ||--o{ records : "recorded_in"
+    recipes ||--o{ portions : "contains"
+    recipes ||--o{ steps : "contains"
+    ingredients ||--o{ portions : "used_in"
+    categories ||--o{ ingredients : "belongs_to"
+
+    %% Supabase auth.users table (managed by Supabase Auth)
+    auth-users {
+        uuid id PK "Supabase managed"
+        string email "Supabase managed"
+        string password_hash "Supabase managed"
+        jsonb raw_user_meta_data "Supabase managed"
+        jsonb raw_app_meta_data "Supabase managed"
+        timestamp created_at "Supabase managed"
+        timestamp updated_at "Supabase managed"
+        timestamp email_confirmed_at "Supabase managed"
+    }
+
+    %% Public schema users table
+    users {
+        uuid id PK "App-level ref to auth.users.id"
+        string display_name "NULL"
+        string first_name "NULL"
+        string last_name "NULL"
+        string avatar_url "NULL"
+        timestamp created_at "NOT NULL"
+        timestamp updated_at "NOT NULL"
+    }
+
+    categories {
+        int id PK "auto_increment"
+        string name "NOT NULL"
+        string icon "NOT NULL CHANGED from icon_url"
+        int sort_order "NOT NULL"
+        timestamp created_at "NOT NULL"
+        timestamp updated_at "NOT NULL"
+    }
+
+    ingredients {
+        int id PK "auto_increment"
+        string name "NOT NULL"
+        int category_id FK "NOT NULL"
+        string icon "NULL CHANGED from icon_url for future use"
+        int sort_order "NOT NULL"
+        timestamp created_at "NOT NULL"
+        timestamp updated_at "NOT NULL"
+    }
+
+    recipes {
+        int id PK "auto_increment"
+        string title "NOT NULL"
+        text description "NULL"
+        int cooking_time "NOT NULL"
+        int difficulty "NOT NULL 1-3"
+        int servings "NOT NULL"
+        string image_url "NULL AI generated"
+        text image_prompt "NULL ADDED for AI image generation"
+        int genre "NOT NULL ENUM managed by app"
+        int calories "NULL"
+        timestamp created_at "NOT NULL"
+        timestamp updated_at "NOT NULL"
+    }
+
+    steps {
+        int id PK "auto_increment"
+        int recipe_id FK "NOT NULL"
+        int step_number "NOT NULL"
+        text instruction "NOT NULL"
+        string image_url "NULL"
+        text tips "NULL"
+        timestamp created_at "NOT NULL"
+        timestamp updated_at "NOT NULL"
+    }
+
+    portions {
+        int id PK "auto_increment"
+        int recipe_id FK "NOT NULL"
+        int ingredient_id FK "NULL CHANGED to allow user custom ingredients"
+        string name "NULL ADDED for user custom ingredients"
+        string amount "NOT NULL"
+        timestamp created_at "NOT NULL"
+        timestamp updated_at "NOT NULL"
+    }
+
+
+    records {
+        int id PK "auto_increment"
+        uuid user_id FK "NOT NULL references users(id)"
+        int recipe_id FK "NOT NULL"
+        string user_image_url "NULL"
+        int rating "NULL 1-5"
+        text memo "NULL"
+        timestamp cooked_at "NOT NULL"
+        timestamp created_at "NOT NULL"
+        timestamp updated_at "NOT NULL"
+    }

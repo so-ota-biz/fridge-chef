@@ -1,0 +1,30 @@
+flowchart TD
+    A[ホーム画面] --> B[食材選択画面]
+    B --> C[条件指定画面]
+    C --> D[AI提案結果画面]
+    
+    %% メインフロー（レシピ採用）
+    D -->|レシピ採用| E[レシピ詳細・調理記録画面]
+    E --> A
+    
+    %% レシピ不採用時
+    D -->|すべて不採用| B
+    
+    %% 認証フロー
+    A --> F[ログイン画面]
+    F --> A
+    A --> G[新規登録画面]
+    G --> F
+    
+    %% アーカイブ確認
+    A --> H[アーカイブ一覧画面]
+    H --> I[料理記録詳細画面]
+    I --> H
+    
+    classDef primary fill:#e1f5fe
+    classDef secondary fill:#f3e5f5
+    classDef action fill:#e8f5e8
+    
+    class A,B,C,D,E primary
+    class H,I secondary
+    class F,G action

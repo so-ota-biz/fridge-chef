@@ -1,0 +1,31 @@
+services:
+  # NestJS API（開発環境）
+  api:
+    container_name: nestjs_api_backend
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - SUPABASE_URL=http://supabase_kong_backend:8000 # コンテナ間通信用
+      - SUPABASE_PUBLIC_URL=http://127.0.0.1:54321 # ブラウザアクセス用
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - SUPABASE_JWT_SECRET=${SUPABASE_JWT_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - supabase_network_backend
+    tty: true
+    stdin_open: true
+    command: npm run start:dev
+
+networks:
+  supabase_network_backend:
+    external: true

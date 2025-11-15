@@ -1,0 +1,180 @@
+name: Deploy (Supabase Migrate + Render + Vercel)
+
+on:
+  push:
+    branches:
+      - production
+      - "feature/#30_build_cicd"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+      force: ${{ steps.force.outputs.force }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
+      - name: Check commit message for force deploy
+        id: force
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+        run: |
+          if printf '%s' "$COMMIT_MSG" | grep -qi "\[deploy-all\]"; then
+            echo "force=true" >> $GITHUB_OUTPUT
+          else
+            echo "force=false" >> $GITHUB_OUTPUT
+          fi
+
+  migrate:
+    name: Apply Supabase Migrations
+    runs-on: ubuntu-latest
+    needs: changes
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.force == 'true'
+    defaults:
+      run:
+        working-directory: backend/supabase
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Print CLI version and list migrations
+        run: |
+          supabase --version || supabase -v || true
+          echo "Working dir: $(pwd)"
+          echo "Migrations:"
+          ls -la migrations || true
+
+      - name: Sanitize Supabase config for CI (minimal)
+        run: |
+          echo "Sanitizing config.toml for CI"
+          if [ -f config.toml ]; then mv config.toml config.toml.bak; fi
+          cat > config.toml << 'EOF'
+          project_id = "ci"
+
+          [db]
+          major_version = 15
+          EOF
+
+      - name: Apply migrations to remote (debug)
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ]; then
+            echo "SUPABASE_DB_URL secret is required. Use the Session Pooler connection string with sslmode=require&pgbouncer=true&connection_limit=1." >&2
+            exit 1
+          fi
+          echo "supabase CLI version:"; supabase --version || true
+          echo "Applying migrations with remote DB URL (masked)."
+          supabase --debug migration up --db-url "$SUPABASE_DB_URL"
+
+      - name: Restore Supabase config (cleanup)
+        if: always()
+        run: |
+          if [ -f config.toml.bak ]; then mv -f config.toml.bak config.toml; fi
+          if [ -f config.toml ]; then
+            echo "Config restore successful"
+          else
+            echo "ERROR: config.toml restoration may have failed!" >&2
+            exit 1
+          fi
+
+  deploy-backend:
+    name: Trigger Render Deploy
+    needs: [changes, migrate]
+    if: needs.changes.outputs.backend == 'true' || needs.changes.outputs.force == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Render deploy hook secret exists
+        run: |
+          if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
+            echo "RENDER_DEPLOY_HOOK_URL is required. Please set it in repo secrets." >&2
+            exit 1
+          fi
+      - name: Trigger Render deploy hook
+        env:
+          HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          ts=$(date -Iseconds)
+          echo "Triggering Render hook at $ts for $GITHUB_SHA"
+          code=$(curl -sS -o /tmp/render_body.txt -D /tmp/render_headers.txt -w "%{http_code}" -X POST "$HOOK")
+          echo "Render hook HTTP status: $code"
+          echo "Render hook response headers:"
+          sed -n '1,200p' /tmp/render_headers.txt || true
+          echo "Render hook response body:"
+          sed -n '1,200p' /tmp/render_body.txt || true
+          if [ "$code" -ge 400 ]; then exit 1; fi
+
+  deploy-frontend-after-backend:
+    name: Trigger Vercel Deploy (after BE)
+    needs: [changes, migrate, deploy-backend]
+    if: (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.force == 'true') && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.force == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Vercel deploy hook secret exists
+        run: |
+          if [ -z "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" ]; then
+            echo "VERCEL_DEPLOY_HOOK_URL is required. Please set it in repo secrets." >&2
+            exit 1
+          fi
+      - name: Trigger Vercel deploy hook (Production)
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          ts=$(date -Iseconds)
+          echo "Triggering Vercel hook at $ts for $GITHUB_SHA"
+          code=$(curl -sS -o /tmp/vercel_body.txt -D /tmp/vercel_headers.txt -w "%{http_code}" -X POST "$HOOK")
+          echo "Vercel hook HTTP status: $code"
+          echo "Vercel hook response headers:"
+          sed -n '1,200p' /tmp/vercel_headers.txt || true
+          echo "Vercel hook response body:"
+          sed -n '1,200p' /tmp/vercel_body.txt || true
+          if [ "$code" -ge 400 ]; then exit 1; fi
+
+  deploy-frontend-only:
+    name: Trigger Vercel Deploy (FE only)
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true' && needs.changes.outputs.backend != 'true' && needs.changes.outputs.force != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Vercel deploy hook secret exists
+        run: |
+          if [ -z "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" ]; then
+            echo "VERCEL_DEPLOY_HOOK_URL is required. Please set it in repo secrets." >&2
+            exit 1
+          fi
+      - name: Trigger Vercel deploy hook (Production)
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          ts=$(date -Iseconds)
+          echo "Triggering Vercel hook at $ts for $GITHUB_SHA (FE only)"
+          code=$(curl -sS -o /tmp/vercel_body.txt -D /tmp/vercel_headers.txt -w "%{http_code}" -X POST "$HOOK")
+          echo "Vercel hook HTTP status: $code"
+          echo "Vercel hook response headers:"
+          sed -n '1,200p' /tmp/vercel_headers.txt || true
+          echo "Vercel hook response body:"
+          sed -n '1,200p' /tmp/vercel_body.txt || true
+          if [ "$code" -ge 400 ]; then exit 1; fi
