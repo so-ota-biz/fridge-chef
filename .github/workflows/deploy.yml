@@ -21,16 +21,62 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine base for path filter
+        id: base
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          echo "ref: $REF_NAME"
+          case "$REF_NAME" in
+            main|production)
+              echo "Using previous commit on this branch as base"
+              echo "base=${{ github.event.before }}" >> $GITHUB_OUTPUT
+              ;;
+            feature/*|bugfix/*)
+              echo "Using origin/main as base for feature/bugfix"
+              echo "base=origin/main" >> $GITHUB_OUTPUT
+              ;;
+            hotfix/*)
+              echo "Using origin/production as base for hotfix"
+              echo "base=origin/production" >> $GITHUB_OUTPUT
+              ;;
+            *)
+              echo "Fallback: previous commit on this branch"
+              echo "base=${{ github.event.before }}" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
+      - name: Ensure base refs exist (fetch origin/main, origin/production)
+        run: |
+          git fetch origin main:refs/remotes/origin/main --depth=1 || true
+          git fetch origin production:refs/remotes/origin/production --depth=1 || true
 
       - name: Filter paths
         id: filter
         uses: dorny/paths-filter@v3
         with:
+          base: ${{ steps.base.outputs.base }}
+          list-files: json
           filters: |
             backend:
               - 'backend/**'
             frontend:
               - 'frontend/**'
+
+      - name: Debug changes context
+        run: |
+          echo "before: ${{ github.event.before }}"
+          echo "after:  ${{ github.sha }}"
+          echo "computed base: ${{ steps.base.outputs.base }}"
+          echo "backend changed?: ${{ steps.filter.outputs.backend }}"
+          echo "frontend changed?: ${{ steps.filter.outputs.frontend }}"
+          echo 'backend files:'
+          echo "${{ steps.filter.outputs.backend_files }}"
+          echo 'frontend files:'
+          echo "${{ steps.filter.outputs.frontend_files }}"
 
       - name: Check commit message for force deploy
         id: force

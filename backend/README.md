@@ -21,6 +21,16 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
+## Cookie/CORS 必須事項（クロスサイト運用）
+
+フロントエンドを Vercel、バックエンドを Render にデプロイするクロスサイト構成では、以下の設定が必須です。
+
+- `COOKIE_SAMESITE=none`
+- `COOKIE_SECURE=true`
+- `FRONTEND_URL` と CORS の `origin` は完全一致（末尾スラなし）
+
+あわせて、フロント側では `NEXT_PUBLIC_API_URL` をバックエンドの公開 URL に設定してください。
+
 ## 概要
 
 Cookieベース認証 + CSRF(ダブルサブミット)方式に対応しています。以下の環境変数を適切に設定してください。
