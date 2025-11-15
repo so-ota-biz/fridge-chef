@@ -34,9 +34,10 @@ jobs:
 
       - name: Check commit message for force deploy
         id: force
+        env:
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
         run: |
-          MSG="${{ github.event.head_commit.message }}"
-          if echo "$MSG" | grep -qi "\[deploy-all\]"; then
+          if printf '%s' "$COMMIT_MSG" | grep -qi "\[deploy-all\]"; then
             echo "force=true" >> $GITHUB_OUTPUT
           else
             echo "force=false" >> $GITHUB_OUTPUT
@@ -93,6 +94,12 @@ jobs:
         if: always()
         run: |
           if [ -f config.toml.bak ]; then mv -f config.toml.bak config.toml; fi
+          if [ -f config.toml ]; then
+            echo "Config restore successful"
+          else
+            echo "ERROR: config.toml restoration may have failed!" >&2
+            exit 1
+          fi
 
   deploy-backend:
     name: Trigger Render Deploy
