@@ -34,9 +34,7 @@ description: 本リポジトリのCI/CD方針・流れ・設定方法の完全�
   - deploy-frontend-only: FE変更のみの場合にVercel Deploy Hookを実行
 
 Secrets（GitHub、すべて必須）
-- `SUPABASE_ACCESS_TOKEN`: Supabase CLI トークン
-- `SUPABASE_PROJECT_REF`: Supabase プロジェクトref
-- `SUPABASE_DB_PASSWORD`: Supabase プロジェクト作成時のDatabase Password（postgresユーザーのパスワード）
+- `SUPABASE_DB_URL`: Supabase Session Pooler の接続文字列（sslmode=require&pgbouncer=true&connection_limit=1）
 - `RENDER_DEPLOY_HOOK_URL`: Render Deploy Hook（Production）
 - `VERCEL_DEPLOY_HOOK_URL`: Vercel Deploy Hook（Production / branch=production）
 
@@ -83,9 +81,7 @@ Secrets（GitHub、すべて必須）
 - `SUPABASE_SERVICE_ROLE_KEY`: Project Settings → API → Service role key
 - `FRONTEND_URL`: Vercel本番URLまたは独自ドメイン
 - `NEXT_PUBLIC_API_URL`: Render の BE URL（Vercel）
-- `SUPABASE_ACCESS_TOKEN`: Supabase → Account → Access Tokens
-- `SUPABASE_PROJECT_REF`: プロジェクトURLや設定画面で確認
-- `SUPABASE_DB_PASSWORD`: Supabase プロジェクト作成時に設定した Database Password（Settings → Database）
+- `SUPABASE_DB_URL`: Supabase → Database → Connection pooling → Session → Prisma/Node から取得（パスワードはURLに含む）
 - `RENDER_DEPLOY_HOOK_URL`: Render → Service → Settings → Deploy hooks
 - `VERCEL_DEPLOY_HOOK_URL`: Vercel → Project → Settings → Deploy Hooks（Production / branch=production）
 
