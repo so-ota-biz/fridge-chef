@@ -56,8 +56,28 @@ jobs:
 
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
-      - name: Apply migrations to remote
+      - name: Print CLI version and list migrations
+        run: |
+          supabase --version || supabase -v || true
+          echo "Working dir: $(pwd)"
+          echo "Migrations:"
+          ls -la migrations || true
+
+      - name: Sanitize Supabase config for CI (minimal)
+        run: |
+          echo "Sanitizing config.toml for CI"
+          if [ -f config.toml ]; then mv config.toml config.toml.bak; fi
+          cat > config.toml << 'EOF'
+          project_id = "ci"
+
+          [db]
+          major_version = 15
+          EOF
+
+      - name: Apply migrations to remote (debug)
         env:
           SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
         run: |
@@ -65,7 +85,14 @@ jobs:
             echo "SUPABASE_DB_URL secret is required. Use the Session Pooler connection string with sslmode=require&pgbouncer=true&connection_limit=1." >&2
             exit 1
           fi
-          supabase migration up --db-url "$SUPABASE_DB_URL"
+          echo "supabase CLI version:"; supabase --version || true
+          echo "Applying migrations with remote DB URL (masked)."
+          supabase --debug migration up --db-url "$SUPABASE_DB_URL"
+
+      - name: Restore Supabase config (cleanup)
+        if: always()
+        run: |
+          if [ -f config.toml.bak ]; then mv -f config.toml.bak config.toml; fi
 
   deploy-backend:
     name: Trigger Render Deploy
