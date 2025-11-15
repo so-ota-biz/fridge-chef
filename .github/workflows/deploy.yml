@@ -92,6 +92,38 @@ jobs:
         run: |
           curl -sS -X POST "$HOOK"
 
-  # Frontend deploy is handled by Vercel Auto Deploy.
-  # Use Vercel's "Ignored Build Step" to skip builds when frontend/ has no changes,
-  # or to force build via commit message marker [deploy-all].
+  deploy-frontend-after-backend:
+    name: Trigger Vercel Deploy (after BE)
+    needs: [changes, migrate, deploy-backend]
+    if: (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.force == 'true') && (needs.changes.outputs.backend == 'true' || needs.changes.outputs.force == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Vercel deploy hook secret exists
+        run: |
+          if [ -z "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" ]; then
+            echo "VERCEL_DEPLOY_HOOK_URL is required. Please set it in repo secrets." >&2
+            exit 1
+          fi
+      - name: Trigger Vercel deploy hook (Production)
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          curl -sS -X POST "$HOOK"
+
+  deploy-frontend-only:
+    name: Trigger Vercel Deploy (FE only)
+    needs: [changes]
+    if: needs.changes.outputs.frontend == 'true' && needs.changes.outputs.backend != 'true' && needs.changes.outputs.force != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure Vercel deploy hook secret exists
+        run: |
+          if [ -z "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" ]; then
+            echo "VERCEL_DEPLOY_HOOK_URL is required. Please set it in repo secrets." >&2
+            exit 1
+          fi
+      - name: Trigger Vercel deploy hook (Production)
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        run: |
+          curl -sS -X POST "$HOOK"
