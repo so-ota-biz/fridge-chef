@@ -22,4 +22,4 @@ COPY . .
 EXPOSE 3000
 
 # 開発サーバー起動
-CMD ["npm", "run", "start:debug"]
+CMD ["npm", "run", "start:dev"]
