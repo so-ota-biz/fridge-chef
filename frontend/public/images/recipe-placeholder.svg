@@ -1,0 +1,27 @@
+<svg width="400" height="300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="400" height="300" fill="#f8f9fa"/>
+  
+  <!-- Plate -->
+  <ellipse cx="200" cy="180" rx="120" ry="40" fill="#e9ecef" stroke="#dee2e6" stroke-width="3"/>
+  
+  <!-- Fork -->
+  <g transform="translate(100, 100)">
+    <rect x="0" y="0" width="8" height="80" rx="2" fill="#adb5bd"/>
+    <rect x="-8" y="0" width="4" height="35" rx="2" fill="#adb5bd"/>
+    <rect x="0" y="0" width="4" height="35" rx="2" fill="#adb5bd"/>
+    <rect x="8" y="0" width="4" height="35" rx="2" fill="#adb5bd"/>
+    <rect x="16" y="0" width="4" height="35" rx="2" fill="#adb5bd"/>
+  </g>
+  
+  <!-- Spoon -->
+  <g transform="translate(280, 100)">
+    <rect x="0" y="0" width="8" height="80" rx="2" fill="#adb5bd"/>
+    <ellipse cx="4" cy="0" rx="12" ry="20" fill="#adb5bd"/>
+  </g>
+  
+  <!-- Text -->
+  <text x="200" y="250" font-family="Arial, sans-serif" font-size="18" fill="#868e96" text-anchor="middle">
+    料理画像
+  </text>
+</svg>

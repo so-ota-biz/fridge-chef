@@ -38,12 +38,7 @@ export const Header = ({ opened, toggle }: HeaderProps) => {
         <Menu.Target>
           <UnstyledButton>
             <Group gap="sm">
-              <Avatar
-                src={user?.avatarUrl}
-                alt={alt}
-                radius="xl"
-                size="md"
-              />
+              <Avatar src={user?.avatarUrl} alt={alt} radius="xl" size="md" />
               <div style={{ flex: 1 }}>
                 <Text size="sm" fw={500}>
                   {user?.displayName || 'ユーザー'}

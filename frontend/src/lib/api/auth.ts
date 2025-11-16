@@ -39,7 +39,10 @@ export const signIn = async (data: SignInRequest): Promise<SignInResponse> => {
     return response.data
   } catch (err: unknown) {
     throw new Error(
-      extractApiErrorMessage(err, 'ログインに失敗しました。メールアドレスとパスワードを確認してください。'),
+      extractApiErrorMessage(
+        err,
+        'ログインに失敗しました。メールアドレスとパスワードを確認してください。',
+      ),
     )
   }
 }

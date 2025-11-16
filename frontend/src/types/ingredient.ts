@@ -1,9 +1,18 @@
 /**
- * 食材情報（将来実装用のプレースホルダー）
+ * 食材
+ * GET /ingredients のレスポンス型
  */
 export interface Ingredient {
-  id: string
+  id: number
   name: string
-  category: string
-  iconUrl: string | null
+  categoryId: number
+  icon: string | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
 }
+
+/**
+ * GET /ingredients のレスポンス型
+ */
+export type IngredientsResponse = Ingredient[]
