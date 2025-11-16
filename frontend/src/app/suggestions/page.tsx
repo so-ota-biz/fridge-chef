@@ -23,34 +23,25 @@ import { useIngredientStore, useConditionStore } from '@/lib/store'
 const SuggestionsPage = () => {
   const router = useRouter()
 
-  // 状態管理
   const { selectedIngredients } = useIngredientStore()
   const { genre, difficulty, cookingTime, servings } = useConditionStore()
 
-  // レシピ生成
   const { mutate, data, isPending, isError, error } = useRecipeGeneration()
 
-  // 初回レンダリング時にレシピ生成を実行
   useEffect(() => {
-    if (selectedIngredients.length < 2) {
-      return
-    }
-
-    // すでにデータがある場合は再実行しない
-    if (data) {
+    if (selectedIngredients.length < 2 || data) {
       return
     }
 
     mutate({
-      ingredients: selectedIngredients, // 食材名の配列
+      ingredients: selectedIngredients,
       genre,
       difficulty,
       cookingTime,
       servings,
     })
-  }, []) // 空の依存配列で初回のみ実行
+  }, [])
 
-  // 食材が選択されていない場合
   if (selectedIngredients.length < 2) {
     return (
       <MainLayout>
@@ -70,7 +61,6 @@ const SuggestionsPage = () => {
     )
   }
 
-  // 生成中
   if (isPending) {
     return (
       <MainLayout>
@@ -93,7 +83,6 @@ const SuggestionsPage = () => {
     )
   }
 
-  // エラー時
   if (isError) {
     return (
       <MainLayout>
@@ -126,6 +115,9 @@ const SuggestionsPage = () => {
                 <Button variant="outline" onClick={() => router.push('/conditions')}>
                   条件を変更
                 </Button>
+                <Button variant="outline" onClick={() => router.push('/ingredients')}>
+                  食材を変更
+                </Button>
               </Group>
             </Stack>
           </Alert>
@@ -134,7 +126,6 @@ const SuggestionsPage = () => {
     )
   }
 
-  // レシピが0件の場合
   if (!data || data.recipes.length === 0) {
     return (
       <MainLayout>
@@ -147,9 +138,7 @@ const SuggestionsPage = () => {
             <Stack gap="md">
               <Text>条件を変更して再度お試しください。</Text>
               <Group>
-                <Button onClick={() => router.push('/conditions')}>条件を変更</Button>
                 <Button
-                  variant="outline"
                   onClick={() => {
                     mutate({
                       ingredients: selectedIngredients,
@@ -162,6 +151,12 @@ const SuggestionsPage = () => {
                 >
                   再試行
                 </Button>
+                <Button variant="outline" onClick={() => router.push('/conditions')}>
+                  条件を変更
+                </Button>
+                <Button variant="outline" onClick={() => router.push('/ingredients')}>
+                  食材を変更
+                </Button>
               </Group>
             </Stack>
           </Alert>
@@ -170,12 +165,10 @@ const SuggestionsPage = () => {
     )
   }
 
-  // 成功時
   return (
     <MainLayout>
       <Container size="lg" mt="xl">
         <Stack gap="xl">
-          {/* ヘッダー */}
           <div>
             <Title order={1} mb="xs">
               レシピ提案
@@ -183,14 +176,12 @@ const SuggestionsPage = () => {
             <Text c="dimmed">AIが{data.recipes.length}つのレシピを提案しました</Text>
           </div>
 
-          {/* 部分失敗の警告 */}
           {data.recipes.length < 3 && (
             <Alert color="yellow">
               一部のレシピ生成に失敗しました。{data.recipes.length}件のレシピを表示しています。
             </Alert>
           )}
 
-          {/* レシピカード一覧 */}
           <Grid gutter="lg">
             {data.recipes.map((recipe) => (
               <Grid.Col key={recipe.id} span={{ base: 12, sm: 6, md: 4 }}>
@@ -199,7 +190,6 @@ const SuggestionsPage = () => {
             ))}
           </Grid>
 
-          {/* アクションボタン */}
           <Group justify="space-between">
             <Button variant="outline" onClick={() => router.push('/conditions')}>
               条件を変更

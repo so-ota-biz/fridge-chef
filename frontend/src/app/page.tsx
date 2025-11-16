@@ -24,8 +24,15 @@ export default function HomePage() {
   const { isAuthenticated } = useAuth()
   const isAuthRestored = useAuthStore((state) => state.isAuthRestored)
 
-  // 最新の調理記録を取得（最大3件）
-  const { data: recordsData } = useRecords({ limit: 3, offset: 0 })
+  // 認証済みの場合のみ調理記録を取得
+  const { data: recordsData } = useRecords(
+    { limit: 3, offset: 0 },
+    { enabled: isAuthenticated && isAuthRestored },
+  )
+
+  // データの取得
+  const recordsCount = recordsData?.total || 0
+  const recentRecords = recordsData?.records || []
 
   // 認証復元中
   if (!isAuthRestored) {
@@ -65,10 +72,6 @@ export default function HomePage() {
       </Container>
     )
   }
-
-  // 認証済みユーザー向けのトップページ
-  const recordsCount = recordsData?.total || 0
-  const recentRecords = recordsData?.records || []
 
   return (
     <MainLayout>

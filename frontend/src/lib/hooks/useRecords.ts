@@ -5,9 +5,10 @@ import type { RecordQueryParams } from '@/types/record'
 /**
  * 調理記録一覧取得Hook
  */
-export const useRecords = (params?: RecordQueryParams) => {
+export const useRecords = (params?: RecordQueryParams, options?: { enabled?: boolean }) => {
   return useQuery({
     queryKey: ['records', params],
     queryFn: () => getRecords(params),
+    enabled: options?.enabled ?? true, // デフォルトは有効
   })
 }

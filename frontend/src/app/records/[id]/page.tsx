@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Container,
@@ -36,17 +36,12 @@ const RecordDetailPage = ({ params }: { params: { id: string } }) => {
   const { mutate: updateRecord, isPending: isUpdating } = useUpdateRecord()
   const { mutate: deleteRecord, isPending: isDeleting } = useDeleteRecord()
 
-  // ローカルstate
-  const [rating, setRating] = useState<number>(0)
-  const [memo, setMemo] = useState<string>('')
+  // レコードIDが変わったときに状態をリセットするためのキー
+  const resetKey = useMemo(() => `${recordId}-${record?.id}`, [recordId, record?.id])
 
-  // 記録データを取得したらstateに反映
-  useEffect(() => {
-    if (record) {
-      setRating(record.rating || 0)
-      setMemo(record.memo || '')
-    }
-  }, [record])
+  // ローカルstate - レコードの初期値を使用
+  const [rating, setRating] = useState<number>(() => record?.rating || 0)
+  const [memo, setMemo] = useState<string>(() => record?.memo || '')
 
   // 保存
   const handleSave = () => {
@@ -173,7 +168,7 @@ const RecordDetailPage = ({ params }: { params: { id: string } }) => {
           <Paper withBorder p="md" radius="md">
             <Stack gap="md">
               <Text fw={500}>⭐ 評価</Text>
-              <RatingInput value={rating} onChange={setRating} />
+              <RatingInput key={`rating-${resetKey}`} value={rating} onChange={setRating} />
             </Stack>
           </Paper>
 
@@ -182,6 +177,7 @@ const RecordDetailPage = ({ params }: { params: { id: string } }) => {
             <Stack gap="md">
               <Text fw={500}>📝 メモ</Text>
               <Textarea
+                key={`memo-${resetKey}`}
                 placeholder="調理時の気づきやコツを入力..."
                 minRows={4}
                 value={memo}
