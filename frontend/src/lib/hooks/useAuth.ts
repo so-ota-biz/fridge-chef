@@ -45,8 +45,8 @@ export const useSignIn = () => {
       // React Queryのキャッシュをクリア（別ユーザーのデータが残っている可能性があるため）
       queryClient.clear()
 
-      // ダッシュボードにリダイレクト
-      router.push('/dashboard')
+      // TOPページにリダイレクト
+      router.push('/')
     },
   })
 }
