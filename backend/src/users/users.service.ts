@@ -14,8 +14,8 @@ import { UpdateUserDto } from '@/users/dto/update-user.dto'
 import { User, UpdateUserResponse } from '@/users/types/user.type'
 import { UploadAvatarResponse } from '@/users/types/upload-avatar.type'
 import * as path from 'path'
-import { v4 as uuidv4 } from 'uuid'
 import { Prisma } from '@prisma/client'
+import { randomUUID } from 'crypto'
 
 @Injectable()
 export class UsersService {
@@ -120,8 +120,9 @@ export class UsersService {
     }
 
     // 新しいファイル名を生成（UUID + 拡張子）
+    const uuidv4 = randomUUID()
     const fileExtension = path.extname(file.originalname)
-    const fileName = `${uuidv4()}${fileExtension}`
+    const fileName = `${uuidv4}${fileExtension}`
     const filePath = `${userId}/${fileName}`
 
     // 既存のアバターを取得
