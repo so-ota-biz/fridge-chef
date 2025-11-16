@@ -14,7 +14,6 @@ export const Navbar = () => {
 
   const navItems = [
     { label: 'トップ', icon: HomeIcon, href: '/' },
-    { label: 'レシピ検索', icon: MagnifyingGlassIcon, href: '/ingredients' },
     { label: '調理記録', icon: BookOpenIcon, href: '/records' },
     { label: 'プロフィール', icon: UserCircleIcon, href: '/user/profile' },
   ]
@@ -54,7 +53,7 @@ export const Navbar = () => {
         if (!isImplemented) {
           return (
             <Tooltip key={item.href} label="準備中です" withArrow>
-              {navLink}
+              <div>{navLink}</div>
             </Tooltip>
           )
         }

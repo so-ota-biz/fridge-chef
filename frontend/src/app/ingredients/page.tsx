@@ -15,7 +15,6 @@ import { useIngredientStore } from '@/lib/store'
 const IngredientsPage = () => {
   const router = useRouter()
 
-  // データ取得
   const { data: categories, isLoading: categoriesLoading, error: categoriesError } = useCategories()
   const {
     data: ingredients,
@@ -23,11 +22,9 @@ const IngredientsPage = () => {
     error: ingredientsError,
   } = useIngredients()
 
-  // 状態管理
   const { selectedIngredients, addIngredient, removeIngredient, clearIngredients, isSelected } =
     useIngredientStore()
 
-  // 食材の選択/解除をトグル
   const handleToggle = (ingredientName: string) => {
     if (isSelected(ingredientName)) {
       removeIngredient(ingredientName)
@@ -36,7 +33,6 @@ const IngredientsPage = () => {
     }
   }
 
-  // 次へボタンのハンドラ
   const handleNext = () => {
     if (selectedIngredients.length < 2) {
       alert('最低2つ以上の食材を選択してください')
@@ -45,7 +41,6 @@ const IngredientsPage = () => {
     router.push('/conditions')
   }
 
-  // ローディング中
   if (categoriesLoading || ingredientsLoading) {
     return (
       <MainLayout>
@@ -56,7 +51,6 @@ const IngredientsPage = () => {
     )
   }
 
-  // エラー時
   if (categoriesError || ingredientsError) {
     return (
       <MainLayout>
@@ -73,7 +67,6 @@ const IngredientsPage = () => {
     )
   }
 
-  // データがない場合
   if (!categories || !ingredients || categories.length === 0 || ingredients.length === 0) {
     return (
       <MainLayout>
@@ -92,9 +85,8 @@ const IngredientsPage = () => {
 
   return (
     <MainLayout>
-      <Container size="lg" mt="xl">
+      <Container size="lg" mt="xl" pb={100}>
         <Stack gap="xl">
-          {/* ヘッダー */}
           <div>
             <Title order={1} mb="xs">
               食材選択
@@ -102,17 +94,14 @@ const IngredientsPage = () => {
             <Text c="dimmed">冷蔵庫にある食材を選択してください</Text>
           </div>
 
-          {/* 選択済み食材 */}
           <SelectedIngredients
             ingredients={selectedIngredients}
             onRemove={removeIngredient}
             onClear={clearIngredients}
           />
 
-          {/* 自由入力 */}
           <CustomIngredientInput onAdd={addIngredient} />
 
-          {/* カテゴリ別食材リスト */}
           <Stack gap="lg">
             {categories
               .sort((a, b) => a.sortOrder - b.sortOrder)
@@ -127,8 +116,7 @@ const IngredientsPage = () => {
               ))}
           </Stack>
 
-          {/* アクションボタン */}
-          <Group justify="space-between">
+          <Group justify="space-between" mt="xl" mb="xl">
             <Button variant="outline" onClick={() => router.back()}>
               戻る
             </Button>

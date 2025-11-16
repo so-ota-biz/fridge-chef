@@ -21,7 +21,6 @@ export const Header = ({ opened, toggle }: HeaderProps) => {
 
   const navItems = [
     { label: 'トップ', href: '/', icon: '🏠' },
-    { label: 'レシピ検索', href: '/ingredients', icon: '🔍' },
     { label: '調理記録', href: '/records', icon: '📚' },
   ]
 

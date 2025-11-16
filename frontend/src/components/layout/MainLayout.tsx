@@ -69,7 +69,11 @@ export const MainLayout = ({ children, showNavbar = true, showFooter = true }: M
         </AppShell.Navbar>
       )}
 
-      <AppShell.Main>{children}</AppShell.Main>
+      <AppShell.Main
+        style={{ minHeight: 'calc(100vh - 60px)', display: 'flex', flexDirection: 'column' }}
+      >
+        <div style={{ flex: 1 }}>{children}</div>
+      </AppShell.Main>
 
       {showFooter && (
         <AppShell.Footer>

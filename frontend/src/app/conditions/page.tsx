@@ -57,7 +57,7 @@ const ConditionsPage = () => {
 
   return (
     <MainLayout>
-      <Container size="md" mt="xl">
+      <Container size="md" mt="xl" pb={100}>
         <Stack gap="xl">
           {/* ヘッダー */}
           <div>
@@ -95,7 +95,7 @@ const ConditionsPage = () => {
           </Stack>
 
           {/* アクションボタン */}
-          <Group justify="space-between">
+          <Group justify="space-between" mb="xl">
             <Button variant="outline" onClick={() => router.push('/ingredients')}>
               戻る
             </Button>
