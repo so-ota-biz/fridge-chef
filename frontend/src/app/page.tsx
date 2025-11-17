@@ -28,12 +28,13 @@ export default function HomePage() {
   const clearRecipeSearch = useRecipeSearchClear()
 
   // 認証済みの場合のみ調理記録を取得
-  const { data: recordsData } = useRecords(
-    { limit: 3, offset: 0 },
-    { enabled: isAuthenticated && isAuthRestored },
-  )
+  const {
+    data: recordsData,
+    isLoading: isLoadingRecords,
+    error: recordsError,
+  } = useRecords({ limit: 3, offset: 0 }, { enabled: isAuthenticated && isAuthRestored })
 
-  // データの取得
+  // データの取り出し
   const recordsCount = recordsData?.total || 0
   const recentRecords = recordsData?.records || []
 
@@ -53,7 +54,7 @@ export default function HomePage() {
     )
   }
 
-  // 未認証時のランディングページ
+  // 未認証時: ランディングページ
   if (!isAuthenticated) {
     return (
       <Container size="md" style={{ marginTop: '10vh' }}>
@@ -67,7 +68,7 @@ export default function HomePage() {
           </Text>
 
           <Text size="lg" ta="center" c="dimmed">
-            AIがあなたの冷蔵庫の食材から、おいしいレシピを提案します
+            AI があなたの冷蔵庫の食材から、おすすめレシピを提案します
           </Text>
 
           <Stack gap="md" mt="xl">
@@ -90,16 +91,12 @@ export default function HomePage() {
           {/* ウェルカムセクション */}
           <Paper withBorder p="xl" radius="md">
             <Stack gap="md">
-              <Title order={2}>👋 こんにちは！</Title>
+              <Title order={2}>👋 こんにちは</Title>
               <Text size="lg" c="dimmed">
                 今日も美味しい料理を作りましょう
               </Text>
               <div>
-                <Button
-                  size="lg"
-                  leftSection={<span>🥕</span>}
-                  onClick={handleStartNewSearch}
-                >
+                <Button size="lg" onClick={handleStartNewSearch}>
                   食材を選んでレシピを探す
                 </Button>
               </div>
@@ -157,14 +154,22 @@ export default function HomePage() {
               )}
             </Group>
 
-            {recentRecords.length === 0 ? (
+            {recordsError ? (
+              <Paper withBorder p="xl" radius="md">
+                <Text c="red">記録の取得に失敗しました</Text>
+              </Paper>
+            ) : isLoadingRecords ? (
+              <Center>
+                <Loader size="lg" />
+              </Center>
+            ) : recentRecords.length === 0 ? (
               <Paper withBorder p="xl" radius="md">
                 <Stack align="center" gap="md">
                   <Text size="lg" c="dimmed">
                     まだ調理記録がありません
                   </Text>
                   <Text size="sm" c="dimmed">
-                    レシピを作って記録を残しましょう！
+                    レシピを作って記録を残しましょう
                   </Text>
                   <Button variant="light" onClick={handleStartNewSearch}>
                     レシピを探す

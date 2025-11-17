@@ -8,6 +8,6 @@ export const useRecord = (id: number) => {
   return useQuery({
     queryKey: ['record', id],
     queryFn: () => getRecord(id),
-    enabled: !!id,
+    enabled: id > 0,
   })
 }

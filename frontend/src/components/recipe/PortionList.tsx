@@ -17,7 +17,7 @@ export const PortionList = ({ portions }: PortionListProps) => {
     return (
       <Paper withBorder p="md" radius="md">
         <Text c="dimmed" ta="center">
-          材料情報がありません
+          材料がありません
         </Text>
       </Paper>
     )
@@ -27,13 +27,13 @@ export const PortionList = ({ portions }: PortionListProps) => {
     <Paper withBorder p="md" radius="md">
       <Stack gap="md">
         <Title order={3} size="h4">
-          🥘 材料
+          🥦 材料
         </Title>
 
         <Stack gap="xs">
           {portions.map((portion) => (
             <Group key={portion.id} justify="space-between" wrap="nowrap">
-              <Text size="sm">{portion.name}</Text>
+              <Text size="sm">{portion.name ?? '-'}</Text>
               <Text size="sm" fw={500} style={{ whiteSpace: 'nowrap' }}>
                 {portion.amount}
               </Text>

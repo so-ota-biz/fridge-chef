@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import {
   Container,
@@ -24,6 +24,52 @@ import { RatingInput } from '@/components/record'
 import { useRecord, useUpdateRecord, useDeleteRecord, useRecipe } from '@/lib/hooks'
 import { getGenreLabel, getDifficultyLabel, RECIPE_PLACEHOLDER_IMAGE } from '@/lib/utils/recipe'
 
+// 編集フォーム（record の切り替え時に key で再マウントして初期化）
+const RecordEditSection = ({
+  initialRating,
+  initialMemo,
+  onSave,
+  isUpdating,
+}: {
+  initialRating: number
+  initialMemo: string
+  onSave: (data: { rating: number; memo: string }) => void
+  isUpdating: boolean
+}) => {
+  const [rating, setRating] = useState<number>(initialRating)
+  const [memo, setMemo] = useState<string>(initialMemo)
+
+  return (
+    <>
+      {/* 評価 */}
+      <Paper withBorder p="md" radius="md">
+        <Stack gap="md">
+          <Text fw={500}>⭐ 評価</Text>
+          <RatingInput value={rating} onChange={setRating} />
+        </Stack>
+      </Paper>
+
+      {/* メモ */}
+      <Paper withBorder p="md" radius="md">
+        <Stack gap="md">
+          <Text fw={500}>📝 メモ</Text>
+          <Textarea
+            placeholder="調理時の気づきやコツを入力..."
+            minRows={4}
+            value={memo}
+            onChange={(e) => setMemo(e.currentTarget.value)}
+          />
+        </Stack>
+      </Paper>
+
+      {/* 保存ボタン */}
+      <Button size="lg" onClick={() => onSave({ rating, memo })} loading={isUpdating}>
+        保存
+      </Button>
+    </>
+  )
+}
+
 const RecordDetailPage = () => {
   const router = useRouter()
   const params = useParams()
@@ -37,20 +83,13 @@ const RecordDetailPage = () => {
   const { mutate: updateRecord, isPending: isUpdating } = useUpdateRecord()
   const { mutate: deleteRecord, isPending: isDeleting } = useDeleteRecord()
 
-  // レコードIDが変わったときに状態をリセットするためのキー
-  const resetKey = useMemo(() => `${recordId}-${record?.id}`, [recordId, record?.id])
-
-  // ローカルstate - レコードの初期値を使用
-  const [rating, setRating] = useState<number>(() => record?.rating || 0)
-  const [memo, setMemo] = useState<string>(() => record?.memo || '')
-
   // 保存
-  const handleSave = () => {
+  const handleSave = ({ rating, memo }: { rating: number; memo: string }) => {
     updateRecord(
       {
         id: recordId,
         data: {
-          // rating=0の場合はnullとして送信して評価をクリア
+          // rating=0 の場合は null として送信して評価をクリア
           rating: rating > 0 ? rating : null,
           memo,
         },
@@ -155,12 +194,24 @@ const RecordDetailPage = () => {
                   </Text>
                 </div>
 
-                <Button variant="light" onClick={() => router.push(`/recipes/${recipe.id}?from=record`)}>
+                <Button
+                  variant="light"
+                  onClick={() => router.push(`/recipes/${recipe.id}?from=record`)}
+                >
                   レシピ詳細を見る
                 </Button>
               </Stack>
             </Paper>
           )}
+
+          {/* 編集フォーム（record.id を key にして変更時に再マウント） */}
+          <RecordEditSection
+            key={record.id}
+            initialRating={record?.rating ?? 0}
+            initialMemo={record?.memo ?? ''}
+            onSave={handleSave}
+            isUpdating={isUpdating}
+          />
 
           <Divider />
 
@@ -171,35 +222,6 @@ const RecordDetailPage = () => {
               <Text>{formattedDate}</Text>
             </Stack>
           </Paper>
-
-          {/* 評価 */}
-          <Paper withBorder p="md" radius="md">
-            <Stack gap="md">
-              <Text fw={500}>⭐ 評価</Text>
-              <RatingInput key={`rating-${resetKey}`} value={rating} onChange={setRating} />
-            </Stack>
-          </Paper>
-
-          {/* メモ */}
-          <Paper withBorder p="md" radius="md">
-            <Stack gap="md">
-              <Text fw={500}>📝 メモ</Text>
-              <Textarea
-                key={`memo-${resetKey}`}
-                placeholder="調理時の気づきやコツを入力..."
-                minRows={4}
-                value={memo}
-                onChange={(e) => setMemo(e.target.value)}
-              />
-            </Stack>
-          </Paper>
-
-          {/* 保存ボタン */}
-          <Button size="lg" onClick={handleSave} loading={isUpdating}>
-            保存
-          </Button>
-
-          <Divider />
 
           {/* アクションボタン */}
           <Group justify="space-between">
