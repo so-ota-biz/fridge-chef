@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
+import { ModalsProvider } from '@mantine/modals'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { theme } from '@/styles/theme'
@@ -52,7 +53,9 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme}>
-        <AuthRestorer>{children}</AuthRestorer>
+        <ModalsProvider>
+          <AuthRestorer>{children}</AuthRestorer>
+        </ModalsProvider>
       </MantineProvider>
     </QueryClientProvider>
   )

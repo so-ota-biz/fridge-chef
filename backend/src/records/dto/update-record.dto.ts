@@ -7,6 +7,7 @@ import {
   IsString,
   MaxLength,
   IsUrl,
+  ValidateIf,
 } from 'class-validator'
 
 export class UpdateRecordDto {
@@ -15,10 +16,11 @@ export class UpdateRecordDto {
   cookedAt?: string
 
   @IsOptional()
+  @ValidateIf((o) => o.rating !== null)
   @IsInt()
   @Min(1)
   @Max(5)
-  rating?: number
+  rating?: number | null
 
   @IsOptional()
   @IsString()

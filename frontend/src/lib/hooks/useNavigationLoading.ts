@@ -4,9 +4,6 @@ import { useState, useCallback, useEffect, useRef } from 'react'
 
 /**
  * 送信成功後の画面遷移が完了するまでローディングを維持するための軽量フック。
- * - 成功時はアンマウント前提のためフラグは解除しない。
- * - 失敗時のみフラグを解除。
- * - 戻る/復元（BFCache）時は安全側で解除。
  */
 export const useNavigationLoading = () => {
   const [isNavigating, setIsNavigating] = useState(false)
@@ -25,14 +22,17 @@ export const useNavigationLoading = () => {
     }
   }, [])
 
-  const withNavigation = useCallback(async <T>(fn: () => Promise<T>): Promise<T> => {
-    setIsNavigating(true)
-    try {
-      return await fn()
-    } finally {
-      stopNavigating()
-    }
-  }, [stopNavigating])
+  const withNavigation = useCallback(
+    async <T>(fn: () => Promise<T>): Promise<T> => {
+      setIsNavigating(true)
+      try {
+        return await fn()
+      } finally {
+        stopNavigating()
+      }
+    },
+    [stopNavigating],
+  )
 
   useEffect(() => {
     const handlePopState = () => setIsNavigating(false)

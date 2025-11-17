@@ -72,9 +72,21 @@ export class RecordsService {
         orderBy: {
           [query.sortBy || 'cookedAt']: query.order || 'desc',
         },
+        include: {
+          recipe: true,
+        },
       }),
       this.prisma.record.count({ where }),
     ])
+
+    // デバッグ: recipeがnullのレコードがあるか確認
+    const recordsWithoutRecipe = records.filter((r) => !r.recipe)
+    if (recordsWithoutRecipe.length > 0) {
+      console.warn(
+        `Warning: Found ${recordsWithoutRecipe.length} record(s) without recipe:`,
+        recordsWithoutRecipe.map((r) => ({ id: r.id, recipeId: r.recipeId })),
+      )
+    }
 
     return {
       records,

@@ -4,12 +4,12 @@ AI が冷蔵庫内の食材から最適なレシピを提案するアプリケ�
 
 ## 技術スタック
 
-| 分類 | 内容 |
-| --- | --- |
-| UI | Next.js 16 (App Router), React 19, Mantine UI |
-| 状態管理 | Zustand + react-query |
-| フォーム/バリデーション | react-hook-form + Zod |
-| HTTP | Axios（リフレッシュ対応インターセプター付） |
+| 分類                    | 内容                                          |
+| ----------------------- | --------------------------------------------- |
+| UI                      | Next.js 16 (App Router), React 19, Mantine UI |
+| 状態管理                | Zustand + react-query                         |
+| フォーム/バリデーション | react-hook-form + Zod                         |
+| HTTP                    | Axios（リフレッシュ対応インターセプター付）   |
 
 ## ディレクトリ構成（抜粋）
 

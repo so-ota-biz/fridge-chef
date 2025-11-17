@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
 import { useAuthStore } from '@/lib/store'
+import { useRecipeSearchClear } from '@/lib/hooks/useRecipeSearchClear'
 import * as authApi from '@/lib/api/auth'
 import type { SignUpRequest, SignInRequest } from '@/types/auth'
 
@@ -45,8 +46,8 @@ export const useSignIn = () => {
       // React Queryのキャッシュをクリア（別ユーザーのデータが残っている可能性があるため）
       queryClient.clear()
 
-      // ダッシュボードにリダイレクト
-      router.push('/dashboard')
+      // TOPページにリダイレクト
+      router.push('/')
     },
   })
 }
@@ -60,6 +61,7 @@ export const useSignIn = () => {
 export const useSignOut = () => {
   const router = useRouter()
   const clearAuth = useAuthStore((state) => state.clearAuth)
+  const clearRecipeSearch = useRecipeSearchClear()
   const queryClient = useQueryClient()
 
   return () => {
@@ -68,8 +70,13 @@ export const useSignOut = () => {
       .logout()
       .catch(() => void 0)
       .finally(() => {
+        // 認証情報をクリア
         clearAuth()
+        // レシピ検索関連の状態を一括クリア
+        clearRecipeSearch()
+        // React Queryのキャッシュをクリア
         queryClient.clear()
+        // サインイン画面にリダイレクト
         router.push('/auth/signin')
       })
   }
