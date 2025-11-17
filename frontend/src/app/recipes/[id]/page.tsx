@@ -104,9 +104,12 @@ const RecipeDetailPage = () => {
             <Button variant="outline" onClick={() => router.push(backPath)}>
               {backLabel}
             </Button>
-            <Button size="lg" onClick={handleAdoptRecipe} loading={isPending} disabled={isPending}>
-              このレシピで調理する
-            </Button>
+            {/* 調理記録から来た場合は「このレシピで調理する」ボタンを非表示 */}
+            {!fromRecord && (
+              <Button size="lg" onClick={handleAdoptRecipe} loading={isPending} disabled={isPending}>
+                このレシピで調理する
+              </Button>
+            )}
           </Group>
         </Stack>
       </Container>
