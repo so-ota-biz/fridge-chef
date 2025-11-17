@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import {
   Container,
   Title,
@@ -28,29 +28,38 @@ const SuggestionsPage = () => {
   const { generatedRecipes, setGeneratedRecipes, clearGeneratedRecipes } = useRecipeStore()
 
   const { mutate, data, isPending, isError, error } = useRecipeGeneration()
+  const hasTriedGeneration = useRef(false)
+
+  const handleGenerate = useCallback(() => {
+    mutate({
+      ingredients: selectedIngredients,
+      genre,
+      difficulty,
+      cookingTime,
+      servings,
+    })
+  }, [selectedIngredients, genre, difficulty, cookingTime, servings, mutate])
+  
+  // mutation成功時にストアに保存
+  useEffect(() => {
+    if (data && !generatedRecipes) {
+      setGeneratedRecipes(data)
+    }
+  }, [data, generatedRecipes, setGeneratedRecipes])
 
   useEffect(() => {
-    // ストアに既にデータがある、または生成中/生成済みの場合はスキップ
-    if (selectedIngredients.length < 2 || generatedRecipes || data) {
+    // 既に試行済み、または条件が満たされていない場合はスキップ
+    if (hasTriedGeneration.current || 
+        selectedIngredients.length < 2 || 
+        generatedRecipes || 
+        data || 
+        isPending) {
       return
     }
 
-    mutate(
-      {
-        ingredients: selectedIngredients,
-        genre,
-        difficulty,
-        cookingTime,
-        servings,
-      },
-      {
-        onSuccess: (result) => {
-          // 生成成功時にストアに保存
-          setGeneratedRecipes(result)
-        },
-      },
-    )
-  }, [])
+    hasTriedGeneration.current = true
+    handleGenerate()
+  }, [selectedIngredients, generatedRecipes, data, isPending, handleGenerate])
 
   if (selectedIngredients.length < 2) {
     return (
@@ -111,20 +120,8 @@ const SuggestionsPage = () => {
               <Group>
                 <Button
                   onClick={() => {
-                    mutate(
-                      {
-                        ingredients: selectedIngredients,
-                        genre,
-                        difficulty,
-                        cookingTime,
-                        servings,
-                      },
-                      {
-                        onSuccess: (result) => {
-                          setGeneratedRecipes(result)
-                        },
-                      },
-                    )
+                    hasTriedGeneration.current = false
+                    handleGenerate()
                   }}
                 >
                   再試行
@@ -172,20 +169,8 @@ const SuggestionsPage = () => {
               <Group>
                 <Button
                   onClick={() => {
-                    mutate(
-                      {
-                        ingredients: selectedIngredients,
-                        genre,
-                        difficulty,
-                        cookingTime,
-                        servings,
-                      },
-                      {
-                        onSuccess: (result) => {
-                          setGeneratedRecipes(result)
-                        },
-                      },
-                    )
+                    hasTriedGeneration.current = false
+                    handleGenerate()
                   }}
                 >
                   再試行
@@ -253,20 +238,8 @@ const SuggestionsPage = () => {
             </Button>
             <Button
               onClick={() => {
-                mutate(
-                  {
-                    ingredients: selectedIngredients,
-                    genre,
-                    difficulty,
-                    cookingTime,
-                    servings,
-                  },
-                  {
-                    onSuccess: (result) => {
-                      setGeneratedRecipes(result)
-                    },
-                  },
-                )
+                hasTriedGeneration.current = false
+                handleGenerate()
               }}
             >
               再生成

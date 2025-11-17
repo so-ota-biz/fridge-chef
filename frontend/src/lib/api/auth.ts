@@ -36,6 +36,15 @@ export const signUp = async (data: SignUpRequest): Promise<SignUpResponse> => {
 export const signIn = async (data: SignInRequest): Promise<SignInResponse> => {
   try {
     const response = await apiClient.post<SignInResponse>('/auth/signin', data)
+    
+    // トークンをローカルストレージに保存
+    if (response.data.accessToken) {
+      localStorage.setItem('accessToken', response.data.accessToken)
+    }
+    if (response.data.refreshToken) {
+      localStorage.setItem('refreshToken', response.data.refreshToken)
+    }
+    
     return response.data
   } catch (err: unknown) {
     throw new Error(
@@ -47,7 +56,7 @@ export const signIn = async (data: SignInRequest): Promise<SignInResponse> => {
   }
 }
 
-/** 現在のユーザー情報（Cookieで検証） */
+/** 現在のユーザー情報（トークンで検証） */
 export const getMe = async () => {
   try {
     const response = await apiClient.get('/auth/me')
@@ -57,31 +66,16 @@ export const getMe = async () => {
   }
 }
 
-/** ログアウト（Cookie削除） */
+/** ログアウト（ローカルストレージクリア） */
 export const logout = async (): Promise<void> => {
   try {
     await apiClient.post('/auth/logout')
   } catch (err: unknown) {
-    throw err
-  }
-}
-
-/** CSRFトークン初期化（初回アクセス時やトークンが存在しない場合） */
-export const initializeCsrf = async (): Promise<void> => {
-  try {
-    const response = await apiClient.get<{ ok: boolean; csrfToken: string }>('/auth/csrf')
-    
-    // CSRFクッキーが設定されていない場合のバックアップ
-    const hasCsrfCookie = document.cookie.split(';').some(cookie => 
-      cookie.trim().startsWith('csrfToken=')
-    )
-    if (response.data.csrfToken && !hasCsrfCookie) {
-      const token = response.data.csrfToken
-      const cookieString = `csrfToken=${token}; path=/`
-      document.cookie = cookieString
-    }
-  } catch (err: unknown) {
-    // CSRF初期化の失敗はログに記録するが、アプリの動作は継続
-    console.warn('CSRF token initialization failed:', err)
+    // サーバーサイドのログアウトが失敗してもローカルストレージはクリア
+    console.warn('Server logout failed:', err)
+  } finally {
+    // ローカルストレージからトークンを削除
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
   }
 }

@@ -2,8 +2,6 @@ import { NestFactory } from '@nestjs/core'
 import { ValidationPipe, Logger } from '@nestjs/common'
 import { AppModule } from '@/app.module'
 import { Request, Response, NextFunction } from 'express'
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-import cookieParser = require('cookie-parser')
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
@@ -23,15 +21,12 @@ async function bootstrap() {
     next()
   })
 
-  // CORS設定（Cookie送信を許可）
+  // CORS設定
   app.enableCors({
     origin: process.env.FRONTEND_URL || 'http://localhost:3001',
-    credentials: true,
+    credentials: false,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   })
-
-  // Cookieパーサ
-  app.use(cookieParser())
 
   // グローバルバリデーションパイプを有効化
   app.useGlobalPipes(
