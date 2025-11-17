@@ -16,7 +16,7 @@ export class UpdateRecordDto {
   cookedAt?: string
 
   @IsOptional()
-  @ValidateIf((o) => o.rating !== null)
+  @ValidateIf((o: UpdateRecordDto) => o.rating !== null)
   @IsInt()
   @Min(1)
   @Max(5)
