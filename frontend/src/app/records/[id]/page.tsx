@@ -50,7 +50,7 @@ const RecordDetailPage = () => {
       { id: recordId, data: { rating, memo } },
       {
         onSuccess: () => {
-          alert('保存しました')
+          router.push('/records')
         },
         onError: () => {
           alert('保存に失敗しました')
@@ -148,7 +148,7 @@ const RecordDetailPage = () => {
                   </Text>
                 </div>
 
-                <Button variant="light" onClick={() => router.push(`/recipes/${recipe.id}`)}>
+                <Button variant="light" onClick={() => router.push(`/recipes/${recipe.id}?from=record`)}>
                   レシピ詳細を見る
                 </Button>
               </Stack>

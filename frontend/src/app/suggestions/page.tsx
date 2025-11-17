@@ -218,7 +218,7 @@ const SuggestionsPage = () => {
 
   return (
     <MainLayout>
-      <Container size="lg" mt="xl" pb={{ base: '8rem', sm: '5rem', md: '3rem' }}>
+      <Container size="lg" mt="xl">
         <Stack gap="xl">
           <div>
             <Title order={1} mb="xs">

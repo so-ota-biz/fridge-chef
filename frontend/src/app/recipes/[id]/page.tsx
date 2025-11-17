@@ -1,7 +1,7 @@
 'use client'
 
 import { Container, Stack, Button, Group, Loader, Center, Alert, Text } from '@mantine/core'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, useSearchParams } from 'next/navigation'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { modals } from '@mantine/modals'
 import { MainLayout } from '@/components/layout'
@@ -11,7 +11,11 @@ import { useRecipe, useCreateRecord, useRecipeSearchClear } from '@/lib/hooks'
 const RecipeDetailPage = () => {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const recipeId = Number(params.id)
+
+  // 遷移元を判別（調理記録から来た場合はfrom=recordがある）
+  const fromRecord = searchParams.get('from') === 'record'
 
   // レシピ詳細を取得
   const { data: recipe, isLoading, error } = useRecipe(recipeId)
@@ -21,6 +25,10 @@ const RecipeDetailPage = () => {
 
   // レシピ検索関連のストアを一括クリアする関数
   const clearRecipeSearch = useRecipeSearchClear()
+
+  // 戻る先を決定
+  const backPath = fromRecord ? '/records' : '/suggestions'
+  const backLabel = fromRecord ? '調理記録一覧に戻る' : 'レシピ一覧に戻る'
 
   // レシピ採用ハンドラ
   const handleAdoptRecipe = () => {
@@ -77,7 +85,7 @@ const RecipeDetailPage = () => {
             レシピの取得に失敗しました。
           </Alert>
           <Group justify="center" mt="xl">
-            <Button onClick={() => router.push('/suggestions')}>レシピ一覧に戻る</Button>
+            <Button onClick={() => router.push(backPath)}>{backLabel}</Button>
           </Group>
         </Container>
       </MainLayout>
@@ -86,15 +94,15 @@ const RecipeDetailPage = () => {
 
   return (
     <MainLayout>
-      <Container size="md" mt="xl" pb={{ base: '8rem', sm: '5rem', md: '3rem' }}>
+      <Container size="md" mt="xl">
         <Stack gap="xl">
           {/* レシピ詳細 */}
           <RecipeDetail recipe={recipe} />
 
           {/* アクションボタン */}
           <Group justify="space-between">
-            <Button variant="outline" onClick={() => router.push('/suggestions')}>
-              レシピ一覧に戻る
+            <Button variant="outline" onClick={() => router.push(backPath)}>
+              {backLabel}
             </Button>
             <Button size="lg" onClick={handleAdoptRecipe} loading={isPending} disabled={isPending}>
               このレシピで調理する
