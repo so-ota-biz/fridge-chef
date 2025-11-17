@@ -76,8 +76,7 @@ apiClient.interceptors.response.use(
   (response) => {
     // CSRFエンドポイントからのレスポンスをログ出力
     if (response.config.url?.includes('/auth/csrf')) {
-      console.log('[CSRF-DEBUG] Response headers:', response.headers)
-      console.log('[CSRF-DEBUG] Set-Cookie header:', response.headers['set-cookie'])
+      console.log('[CSRF-DEBUG] CSRF response status:', response.status)
     }
     return response
   },
