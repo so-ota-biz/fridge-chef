@@ -30,9 +30,9 @@ export interface SignInRequest {
  */
 export interface SignInResponse {
   user: AuthUser
+  accessToken: string
+  refreshToken: string
 }
-
-// Cookieベース運用のため、トークン関連の型は不要
 
 /**
  * GET /auth/me レスポンス

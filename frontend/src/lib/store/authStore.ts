@@ -5,16 +5,6 @@ import { persist } from 'zustand/middleware'
 import type { AuthUser } from '@/types/user'
 import * as authApi from '@/lib/api/auth'
 
-// CSRFクッキー設定完了を確実に待機するユーティリティ
-const waitForCookie = async (cookieName: string, maxAttempts = 20): Promise<boolean> => {
-  for (let i = 0; i < maxAttempts; i++) {
-    const cookie = document.cookie.split(';').find(c => c.trim().startsWith(`${cookieName}=`))
-    if (cookie) return true
-    await new Promise(resolve => setTimeout(resolve, 50)) // 50ms間隔でチェック
-  }
-  return false
-}
-
 // ========================================
 // 状態とアクションの型定義
 // ========================================
@@ -72,23 +62,20 @@ export const useAuthStore = create<AuthState>()(
       },
 
       // --------------------
-      // アクション: サーバーセッションから認証状態を復元
+      // アクション: ローカルストレージから認証状態を復元
       // --------------------
       restoreAuth: () => {
         ;(async () => {
           try {
-            // 認証状態を確認（インターセプターを避けるため axios 直接使用）
-            // /auth/me はGETなのでCSRFトークン不要
-            const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-            const response = await fetch(`${baseURL}/auth/me`, {
-              credentials: 'include', // Cookie送信
-            })
-
-            if (!response.ok) {
-              throw new Error('Not authenticated')
+            // アクセストークンの存在確認
+            const accessToken = localStorage.getItem('accessToken')
+            if (!accessToken) {
+              set({ isAuthRestored: true, isAuthenticated: false, user: null })
+              return
             }
 
-            const me = await response.json()
+            // 有効なトークンかどうかサーバーで確認
+            const me = await authApi.getMe()
             const nextUser: AuthUser = {
               id: me.id,
               email: me.email,
@@ -96,21 +83,12 @@ export const useAuthStore = create<AuthState>()(
               avatarUrl: me.avatarUrl,
             }
 
-            // 認証成功時：CSRFトークン取得→状態更新の順序で実行
-            await authApi.initializeCsrf()
-            // CSRFクッキー設定完了を確実に待機
-            const csrfReady = await waitForCookie('csrfToken')
-            if (!csrfReady) {
-              console.warn('[AUTH-DEBUG] CSRF cookie not detected after initialization')
-            }
             set({ user: nextUser, isAuthenticated: true, isAuthRestored: true })
-            
-            console.log('[AUTH-DEBUG] Authentication restored, cookies:', document.cookie.split(';').length)
           } catch (error) {
-            // 認証失敗時はCSRFトークンだけ取得（未認証でも変更系リクエストに備えて）
-            await authApi.initializeCsrf()
+            // 認証失敗時はローカルストレージをクリア
+            localStorage.removeItem('accessToken')
+            localStorage.removeItem('refreshToken')
             set({ isAuthRestored: true, isAuthenticated: false, user: null })
-            console.log('[AUTH-DEBUG] Authentication failed, cookies after CSRF init:', document.cookie.split(';').length)
           }
         })()
       },

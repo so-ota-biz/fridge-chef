@@ -77,7 +77,9 @@ const RecordDetailPage = () => {
 
   // データ取得
   const { data: record, isLoading, error } = useRecord(recordId)
-  const { data: recipe } = useRecipe(record?.recipeId || 0)
+  const { data: recipe } = useRecipe(record?.recipeId || 0, {
+    enabled: !!record?.recipeId, // recipeIdが存在する場合のみクエリを実行
+  })
 
   // 更新・削除
   const { mutate: updateRecord, isPending: isUpdating } = useUpdateRecord()

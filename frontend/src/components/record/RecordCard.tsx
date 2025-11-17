@@ -46,7 +46,13 @@ export const RecordCard = ({ record }: RecordCardProps) => {
   }
 
   return (
-    <Card shadow="sm" padding="lg" radius="md" withBorder>
+    <Card
+      shadow="sm"
+      padding="lg"
+      radius="md"
+      withBorder
+      style={{ height: '400px', display: 'flex', flexDirection: 'column' }}
+    >
       <Card.Section>
         <Image
           src={record.recipe.imageUrl || RECIPE_PLACEHOLDER_IMAGE}
@@ -55,29 +61,25 @@ export const RecordCard = ({ record }: RecordCardProps) => {
         />
       </Card.Section>
 
-      <Stack gap="xs" mt="md">
-        <Group justify="space-between" align="flex-start">
-          <Text fw={500} lineClamp={1}>
-            {record.recipe.title}
-          </Text>
-          <RatingDisplay value={record.rating || 0} size={16} />
-        </Group>
+      <Stack gap="xs" mt="md" style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: '16px' }}>
+        <Text fw={500} lineClamp={2} style={{ minHeight: '2.5rem' }}>
+          {record.recipe.title}
+        </Text>
+        <RatingDisplay value={record.rating || 0} size={16} />
 
         <Text size="sm" c="dimmed">
           {formattedDate}
         </Text>
 
-        {record.memo && (
-          <Text size="sm" lineClamp={2}>
-            {record.memo}
-          </Text>
-        )}
+        <Text size="sm" lineClamp={2} style={{ minHeight: '2.5rem' }}>
+          {record.memo || ''}
+        </Text>
 
-        <Button
-          variant="light"
-          fullWidth
-          mt="md"
+        <Button 
+          variant="light" 
+          fullWidth 
           onClick={() => router.push(`/records?id=${record.id}`)}
+          style={{ marginBottom: 0 }}
         >
           詳細を見る
         </Button>
