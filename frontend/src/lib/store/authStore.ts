@@ -86,6 +86,8 @@ export const useAuthStore = create<AuthState>()(
               avatarUrl: me.avatarUrl,
             }
             set({ user: nextUser, isAuthenticated: true, isAuthRestored: true })
+            // 認証成功時もCSRFトークンを確実に取得
+            await authApi.initializeCsrf()
           } catch {
             // 認証失敗時はCSRFトークンだけ取得（未認証でも変更系リクエストに備えて）
             await authApi.initializeCsrf()

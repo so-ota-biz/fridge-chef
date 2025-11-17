@@ -39,12 +39,15 @@ export const useSignIn = () => {
 
   return useMutation({
     mutationFn: (data: SignInRequest) => authApi.signIn(data),
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       // 認証情報をストアに保存
       setAuth(response.user)
 
       // React Queryのキャッシュをクリア（別ユーザーのデータが残っている可能性があるため）
       queryClient.clear()
+
+      // CSRFトークンを確実に初期化
+      await authApi.initializeCsrf()
 
       // TOPページにリダイレクト
       router.push('/')
