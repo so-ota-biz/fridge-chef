@@ -180,10 +180,11 @@ export class AuthController {
    */
   @Get('csrf')
   @HttpCode(HttpStatus.OK)
-  issueCsrf(@Res({ passthrough: true }) res: Response): { ok: true } {
+  issueCsrf(@Res({ passthrough: true }) res: Response): { ok: true; csrfToken: string } {
     const csrfToken = this.generateCsrfToken()
     res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(this.CSRF_TOKEN_MAX_AGE))
-    return { ok: true }
+    // クロスドメイン問題のバックアップとしてレスポンスボディにも含める
+    return { ok: true, csrfToken }
   }
 
   /**
