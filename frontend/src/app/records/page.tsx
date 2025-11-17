@@ -1,22 +1,32 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Container, Title, Stack, Button, Text, Center, Loader, Alert, Group } from '@mantine/core'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { MainLayout } from '@/components/layout'
 import { RecordList } from '@/components/record'
 import { useRecords, useRecipeSearchClear } from '@/lib/hooks'
+import RecordDetailPage from './record-detail'
 
-const RecordsPage = () => {
+const RecordsPageContent = () => {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [offset, setOffset] = useState(0)
   const limit = 20
 
   // レシピ検索関連のストアを一括クリアする関数
   const clearRecipeSearch = useRecipeSearchClear()
 
+  // IDが指定されている場合は詳細ページを表示
+  const recordId = searchParams.get('id')
+
+  // フックを条件分岐の前に呼び出す
   const { data, isLoading, error } = useRecords({ limit, offset })
+
+  if (recordId) {
+    return <RecordDetailPage />
+  }
 
   // 新規レシピ検索開始ハンドラ
   const handleStartNewSearch = () => {
@@ -105,6 +115,22 @@ const RecordsPage = () => {
         </Stack>
       </Container>
     </MainLayout>
+  )
+}
+
+const RecordsPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <MainLayout>
+          <Center h="50vh">
+            <Loader size="xl" />
+          </Center>
+        </MainLayout>
+      }
+    >
+      <RecordsPageContent />
+    </Suspense>
   )
 }
 
