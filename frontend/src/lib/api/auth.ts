@@ -79,38 +79,34 @@ export const initializeCsrf = async (): Promise<void> => {
     )
     if (response.data.csrfToken && !hasCsrfCookie) {
       console.log('[CSRF-DEBUG] Setting CSRF token manually as fallback')
+      console.log('[CSRF-DEBUG] Token value:', response.data.csrfToken.substring(0, 8) + '...')
+      console.log('[CSRF-DEBUG] hasCsrfCookie:', hasCsrfCookie)
+      console.log('[CSRF-DEBUG] Current cookies before:', document.cookie)
       
-      // 複数パターンでCookie設定を試行
-      const token = response.data.csrfToken
-      const patterns = [
-        `csrfToken=${token}; path=/; secure; samesite=none`,
-        `csrfToken=${token}; path=/; secure; samesite=lax`,
-        `csrfToken=${token}; path=/; samesite=none`,
-        `csrfToken=${token}; path=/`,
-        `csrfToken=${token}`
-      ]
-      
-      for (let i = 0; i < patterns.length; i++) {
-        console.log(`[CSRF-DEBUG] Trying pattern ${i + 1}:`, patterns[i])
-        document.cookie = patterns[i]
+      // シンプルなパターンで設定
+      try {
+        const token = response.data.csrfToken
+        const cookieString = `csrfToken=${token}; path=/`
+        console.log('[CSRF-DEBUG] Setting cookie with:', cookieString)
+        document.cookie = cookieString
         
         // 即座に確認
-        const check = document.cookie.split(';').find(c => c.trim().startsWith('csrfToken='))
-        console.log(`[CSRF-DEBUG] Pattern ${i + 1} result:`, check ? 'Found' : 'Not found')
+        const immediate = document.cookie
+        console.log('[CSRF-DEBUG] Cookies immediately after:', immediate)
         
-        if (check) {
-          console.log(`[CSRF-DEBUG] Pattern ${i + 1} succeeded`)
-          break
-        }
+        const found = immediate.includes('csrfToken=')
+        console.log('[CSRF-DEBUG] CSRF token found immediately:', found)
+        
+        // 少し待って再確認
+        setTimeout(() => {
+          const delayed = document.cookie
+          console.log('[CSRF-DEBUG] Cookies after timeout:', delayed)
+          const delayedFound = delayed.includes('csrfToken=')
+          console.log('[CSRF-DEBUG] CSRF token found after delay:', delayedFound)
+        }, 100)
+      } catch (error) {
+        console.error('[CSRF-DEBUG] Error setting cookie:', error)
       }
-      
-      // 最終確認
-      setTimeout(() => {
-        const finalCheck = document.cookie.split(';').find(c => c.trim().startsWith('csrfToken='))
-        console.log('[CSRF-DEBUG] Final cookie check:', finalCheck ? 'Found' : 'Not found')
-        console.log('[CSRF-DEBUG] Current domain:', window.location.hostname)
-        console.log('[CSRF-DEBUG] All cookies final:', document.cookie)
-      }, 100)
     }
   } catch (err: unknown) {
     // CSRF初期化の失敗はログに記録するが、アプリの動作は継続
