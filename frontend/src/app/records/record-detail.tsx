@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   Container,
   Title,
@@ -72,8 +72,8 @@ const RecordEditSection = ({
 
 const RecordDetailPage = () => {
   const router = useRouter()
-  const params = useParams()
-  const recordId = Number(params.id)
+  const searchParams = useSearchParams()
+  const recordId = Number(searchParams.get('id'))
 
   // データ取得
   const { data: record, isLoading, error } = useRecord(recordId)
@@ -123,6 +123,26 @@ const RecordDetailPage = () => {
         })
       },
     })
+  }
+
+  // IDが無効な場合
+  if (!recordId || isNaN(recordId)) {
+    return (
+      <MainLayout>
+        <Container size="md" mt="xl">
+          <Alert
+            icon={<ExclamationTriangleIcon style={{ width: 20, height: 20 }} />}
+            title="エラー"
+            color="red"
+          >
+            無効な記録IDです。
+          </Alert>
+          <Group justify="center" mt="xl">
+            <Button onClick={() => router.push('/records')}>調理記録一覧に戻る</Button>
+          </Group>
+        </Container>
+      </MainLayout>
+    )
   }
 
   // ローディング
@@ -196,7 +216,7 @@ const RecordDetailPage = () => {
 
                 <Button
                   variant="light"
-                  onClick={() => router.push(`/recipes/${recipe.id}?from=record`)}
+                  onClick={() => router.push(`/recipes?id=${recipe.id}&from=record`)}
                 >
                   レシピ詳細を見る
                 </Button>

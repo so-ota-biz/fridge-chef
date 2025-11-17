@@ -23,7 +23,7 @@ export const RecipeCard = ({ recipe }: RecipeCardProps) => {
   const router = useRouter()
 
   const handleViewDetail = () => {
-    router.push(`/recipes/${recipe.id}`)
+    router.push(`/recipes?id=${recipe.id}`)
   }
 
   return (

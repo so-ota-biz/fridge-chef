@@ -1,18 +1,18 @@
 'use client'
 
+import { Suspense } from 'react'
 import { Container, Stack, Button, Group, Loader, Center, Alert, Text } from '@mantine/core'
-import { useRouter, useParams, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { modals } from '@mantine/modals'
 import { MainLayout } from '@/components/layout'
 import { RecipeDetail } from '@/components/recipe'
 import { useRecipe, useCreateRecord, useRecipeSearchClear } from '@/lib/hooks'
 
-const RecipeDetailPage = () => {
+const RecipeDetailPageContent = () => {
   const router = useRouter()
-  const params = useParams()
   const searchParams = useSearchParams()
-  const recipeId = Number(params.id)
+  const recipeId = Number(searchParams.get('id'))
 
   // 遷移元を判別（調理記録から来た場合はfrom=recordがある）
   const fromRecord = searchParams.get('from') === 'record'
@@ -46,11 +46,11 @@ const RecipeDetailPage = () => {
         createRecord(
           { recipeId },
           {
-            onSuccess: (data: { id: number }) => {
+            onSuccess: (data) => {
               // レシピ検索関連の状態を一括クリア
               clearRecipeSearch()
               // 調理記録詳細ページへ遷移
-              router.push(`/records/${data.id}`)
+              router.push(`/records?id=${data.id}`)
             },
             onError: () => {
               alert('調理記録の作成に失敗しました')
@@ -59,6 +59,26 @@ const RecipeDetailPage = () => {
         )
       },
     })
+  }
+
+  // IDが無効な場合
+  if (!recipeId || isNaN(recipeId)) {
+    return (
+      <MainLayout>
+        <Container size="md" mt="xl">
+          <Alert
+            icon={<ExclamationTriangleIcon style={{ width: 20, height: 20 }} />}
+            title="エラー"
+            color="red"
+          >
+            無効なレシピIDです。
+          </Alert>
+          <Group justify="center" mt="xl">
+            <Button onClick={() => router.push('/suggestions')}>レシピ一覧に戻る</Button>
+          </Group>
+        </Container>
+      </MainLayout>
+    )
   }
 
   // ローディング中
@@ -106,12 +126,7 @@ const RecipeDetailPage = () => {
             </Button>
             {/* 調理記録から来た場合は「このレシピで調理する」ボタンを非表示 */}
             {!fromRecord && (
-              <Button
-                size="lg"
-                onClick={handleAdoptRecipe}
-                loading={isPending}
-                disabled={isPending}
-              >
+              <Button size="lg" onClick={handleAdoptRecipe} loading={isPending} disabled={isPending}>
                 このレシピで調理する
               </Button>
             )}
@@ -119,6 +134,20 @@ const RecipeDetailPage = () => {
         </Stack>
       </Container>
     </MainLayout>
+  )
+}
+
+const RecipeDetailPage = () => {
+  return (
+    <Suspense fallback={
+      <MainLayout>
+        <Center h="50vh">
+          <Loader size="xl" />
+        </Center>
+      </MainLayout>
+    }>
+      <RecipeDetailPageContent />
+    </Suspense>
   )
 }
 
