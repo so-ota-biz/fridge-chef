@@ -82,6 +82,14 @@ export const initializeCsrf = async (): Promise<void> => {
       const domain = window.location.hostname.includes('vercel.app') ? '.vercel.app' : undefined
       const domainPart = domain ? `; domain=${domain}` : ''
       document.cookie = `csrfToken=${response.data.csrfToken}; path=/; secure; samesite=none${domainPart}`
+      
+      // 設定直後の確認
+      setTimeout(() => {
+        const afterSet = document.cookie.split(';').find(c => c.trim().startsWith('csrfToken='))
+        console.log('[CSRF-DEBUG] Cookie after manual set:', afterSet ? 'Found' : 'Not found')
+        console.log('[CSRF-DEBUG] Current domain:', window.location.hostname)
+        console.log('[CSRF-DEBUG] All cookies after set:', document.cookie)
+      }, 100)
     }
   } catch (err: unknown) {
     // CSRF初期化の失敗はログに記録するが、アプリの動作は継続
