@@ -85,13 +85,19 @@ export const useAuthStore = create<AuthState>()(
               displayName: me.displayName,
               avatarUrl: me.avatarUrl,
             }
-            set({ user: nextUser, isAuthenticated: true, isAuthRestored: true })
-            // 認証成功時もCSRFトークンを確実に取得
+
+            // 認証成功時：CSRFトークン取得→状態更新の順序で実行
             await authApi.initializeCsrf()
-          } catch {
+            // 少し待機してクッキー設定を確実に完了
+            await new Promise(resolve => setTimeout(resolve, 100))
+            set({ user: nextUser, isAuthenticated: true, isAuthRestored: true })
+            
+            console.log('[AUTH-DEBUG] Authentication restored, cookies:', document.cookie.split(';').length)
+          } catch (error) {
             // 認証失敗時はCSRFトークンだけ取得（未認証でも変更系リクエストに備えて）
             await authApi.initializeCsrf()
             set({ isAuthRestored: true, isAuthenticated: false, user: null })
+            console.log('[AUTH-DEBUG] Authentication failed, cookies after CSRF init:', document.cookie.split(';').length)
           }
         })()
       },
