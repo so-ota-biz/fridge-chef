@@ -62,9 +62,7 @@ GitHub Secrets（必須）
 - 環境変数（必須）
   - `DATABASE_URL`: Session Pooler の接続 URL（PW は URL エンコード）
   - `JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_PUBLIC_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `FRONTEND_URL`
-  - Cookie/CORS 必須（クロスサイト/Vercel×Render 構成）
-    - `COOKIE_SAMESITE=none`
-    - `COOKIE_SECURE=true`
+  - CORS 必須（クロスサイト/Vercel×Render 構成）
     - `FRONTEND_URL` と CORS の `origin` は完全一致（末尾スラなし）
 
 ### Vercel（Frontend）
@@ -95,7 +93,7 @@ GitHub Secrets（必須）
 
 - DB 接続失敗（P1001 等）: Session Pooler + `sslmode=require&pgbouncer=true&connection_limit=1`、PW の URL エンコード確認
 - サインイン不可/未確認: Supabase Auth の Redirect を本番 URL に設定（例: `/auth/signin?signup=success`）
-- Cookie/401: `COOKIE_SAMESITE=none`, `COOKIE_SECURE=true` は必須（クロスサイト）。`FRONTEND_URL` と CORS の `origin` 完全一致も必須
+- CORS/401: `FRONTEND_URL` と CORS の `origin` 完全一致は必須
 - Vercel がデプロイされない: Deploy Hook の HTTP ステータス/レスポンスを Actions ログで確認。Production Branch が `production` であることを確認
 
 ---

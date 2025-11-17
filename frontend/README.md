@@ -64,8 +64,9 @@ npm run start:dev
 
 1. `/auth/signup` でメール + パスワード登録
 2. `/auth/signin` でログイン
-3. アクセストークン／リフレッシュトークンは `localStorage` に保存し、axios インターセプターで自動リフレッシュ
+3. JWTトークンは `localStorage` に保存し、axios インターセプターで `Authorization: Bearer {token}` ヘッダーを自動付与
 4. Zustand にユーザー情報とトークンを保持し、`MainLayout` で認証ガード
+5. トークン無効時（401エラー）は自動ログアウト処理
 
 ## テスト・Lint
 
