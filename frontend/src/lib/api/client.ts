@@ -57,14 +57,6 @@ apiClient.interceptors.request.use(
       const csrf = getCookie('csrfToken')
       if (csrf && config.headers) {
         config.headers['X-CSRF-Token'] = csrf
-        // 本番環境一時調査用ログ
-        console.log(`[CSRF-DEBUG] Token set for ${method} ${url}:`, csrf.substring(0, 8) + '...', 'Cookie count:', document.cookie.split(';').length)
-      } else {
-        // 本番環境一時調査用ログ
-        console.warn(`[CSRF-DEBUG] Token missing for ${method} ${url}`)
-        console.warn(`[CSRF-DEBUG] getCookie result:`, csrf)
-        console.warn(`[CSRF-DEBUG] Raw cookie string:`, document.cookie)
-        console.warn(`[CSRF-DEBUG] Parsed cookies:`, document.cookie.split(';').map(c => c.trim()))
       }
     }
     return config
@@ -77,10 +69,6 @@ apiClient.interceptors.request.use(
 // ========================================
 apiClient.interceptors.response.use(
   (response) => {
-    // CSRFエンドポイントからのレスポンスをログ出力
-    if (response.config.url?.includes('/auth/csrf')) {
-      console.log('[CSRF-DEBUG] CSRF response status:', response.status)
-    }
     return response
   },
   async (error: AxiosError) => {

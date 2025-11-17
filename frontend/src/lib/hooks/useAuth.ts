@@ -60,10 +60,7 @@ export const useSignIn = () => {
       await authApi.initializeCsrf()
       
       // CSRFクッキー設定完了を確実に待機
-      const csrfReady = await waitForCookie('csrfToken')
-      if (!csrfReady) {
-        console.warn('[AUTH-DEBUG] CSRF cookie not detected after signin')
-      }
+      await waitForCookie('csrfToken')
 
       // TOPページにリダイレクト
       router.push('/')

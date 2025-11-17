@@ -69,50 +69,19 @@ export const logout = async (): Promise<void> => {
 /** CSRFトークン初期化（初回アクセス時やトークンが存在しない場合） */
 export const initializeCsrf = async (): Promise<void> => {
   try {
-    console.log('[CSRF-DEBUG] Requesting CSRF token from /auth/csrf')
     const response = await apiClient.get<{ ok: boolean; csrfToken: string }>('/auth/csrf')
-    console.log('[CSRF-DEBUG] CSRF response received:', response.status, 'Cookies after:', document.cookie.split(';').length)
     
     // CSRFクッキーが設定されていない場合のバックアップ
     const hasCsrfCookie = document.cookie.split(';').some(cookie => 
       cookie.trim().startsWith('csrfToken=')
     )
     if (response.data.csrfToken && !hasCsrfCookie) {
-      console.log('[CSRF-DEBUG] Setting CSRF token manually as fallback')
-      console.log('[CSRF-DEBUG] Token value:', response.data.csrfToken.substring(0, 8) + '...')
-      console.log('[CSRF-DEBUG] hasCsrfCookie:', hasCsrfCookie)
-      console.log('[CSRF-DEBUG] Current cookies before:', document.cookie)
-      
-      // シンプルなパターンで設定
-      try {
-        const token = response.data.csrfToken
-        const cookieString = `csrfToken=${token}; path=/`
-        console.log('[CSRF-DEBUG] Setting cookie with:', cookieString)
-        document.cookie = cookieString
-        
-        // 即座に確認
-        const immediate = document.cookie
-        console.log('[CSRF-DEBUG] Cookies immediately after:', immediate)
-        
-        const found = immediate.includes('csrfToken=')
-        console.log('[CSRF-DEBUG] CSRF token found immediately:', found)
-        
-        // 少し待って再確認
-        setTimeout(() => {
-          const delayed = document.cookie
-          console.log('[CSRF-DEBUG] Cookies after timeout:', delayed)
-          const delayedFound = delayed.includes('csrfToken=')
-          console.log('[CSRF-DEBUG] CSRF token found after delay:', delayedFound)
-        }, 100)
-      } catch (error) {
-        console.error('[CSRF-DEBUG] Error setting cookie:', error)
-      }
+      const token = response.data.csrfToken
+      const cookieString = `csrfToken=${token}; path=/`
+      document.cookie = cookieString
     }
   } catch (err: unknown) {
     // CSRF初期化の失敗はログに記録するが、アプリの動作は継続
-    console.warn('[CSRF-DEBUG] CSRF token initialization failed:', err)
-    if (err instanceof Error) {
-      console.warn('[CSRF-DEBUG] Error details:', err.message)
-    }
+    console.warn('CSRF token initialization failed:', err)
   }
 }

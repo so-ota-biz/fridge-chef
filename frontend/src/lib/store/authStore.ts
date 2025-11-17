@@ -99,18 +99,12 @@ export const useAuthStore = create<AuthState>()(
             // 認証成功時：CSRFトークン取得→状態更新の順序で実行
             await authApi.initializeCsrf()
             // CSRFクッキー設定完了を確実に待機
-            const csrfReady = await waitForCookie('csrfToken')
-            if (!csrfReady) {
-              console.warn('[AUTH-DEBUG] CSRF cookie not detected after initialization')
-            }
+            await waitForCookie('csrfToken')
             set({ user: nextUser, isAuthenticated: true, isAuthRestored: true })
-            
-            console.log('[AUTH-DEBUG] Authentication restored, cookies:', document.cookie.split(';').length)
           } catch (error) {
             // 認証失敗時はCSRFトークンだけ取得（未認証でも変更系リクエストに備えて）
             await authApi.initializeCsrf()
             set({ isAuthRestored: true, isAuthenticated: false, user: null })
-            console.log('[AUTH-DEBUG] Authentication failed, cookies after CSRF init:', document.cookie.split(';').length)
           }
         })()
       },
