@@ -57,9 +57,14 @@ apiClient.interceptors.request.use(
       const csrf = getCookie('csrfToken')
       if (csrf && config.headers) {
         config.headers['X-CSRF-Token'] = csrf
-      } else if (isMutation) {
-        // CSRFトークンが見つからない場合の詳細ログ
-        console.warn(`CSRF token missing for ${method} ${url}. Available cookies:`, document.cookie)
+      } else {
+        // Development-only detailed logging
+        if (process.env.NODE_ENV === 'development') {
+          const cookieNames = document.cookie.split(';').map(c => c.trim().split('=')[0])
+          console.warn(`CSRF token missing for ${method} ${url}. Available cookie names:`, cookieNames)
+        } else {
+          console.warn(`CSRF token missing for ${method} ${url}`)
+        }
       }
     }
     return config
