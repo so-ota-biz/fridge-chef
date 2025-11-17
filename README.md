@@ -1,48 +1,88 @@
-# fridge-chef
+# FridgeChef
 
-## ブランチ運用について
+冷蔵庫にある食材から、AI が最適な料理レシピを提案する Web アプリケーションです。
 
-- `main` を安定開発ブランチとして位置づけ、それとは別にデプロイ用環境ブランチとして `production` を別途置く
-- `feature` → `main` で日常的に統合
-- 適宜 `main` → `production` をマージしてリリース
-- `production` は `hotfix` 直マージ可
+## 🌐 公開 URL
 
-※ GitLab Flow を意識した環境ブランチ型の運用の簡易版です。
+https://fridge-chef-tau.vercel.app/
 
-## タスク管理について
+## 📦 GitHub リポジトリ
 
-### 1. タスク管理
+https://github.com/so-ota-biz/fridge-chef
 
-- GitHub Issues を 1タスク単位で作成
+## 🔑 デモアカウント
 
-例: `#12 ログイン画面を実装`
+- **メールアドレス**: `dummy@example.com`
+- **パスワード**: `Dummy1234!`
 
-- Issue からブランチを作成 → 実装
+## 💡 コンセプト
 
-```bash
-git checkout -b feature/#12-login-page
-```
+冷蔵庫にある食材を有効活用し、食品ロスを削減しながら、毎日の献立を考える手間を省くことを目指したアプリケーションです。AI が食材の組み合わせから、ユーザーの好みや条件に合わせた最適なレシピを提案します。
 
-※ ただし、１対多の関係になってもよい
+## ✨ 主な機能
 
-例: `#12 ログイン画面を実装` について、
-- `#12-login-page-v2`
-- `#12-login-page-v3`
+### 1. 認証機能
 
-が生まれてもよい
+- ユーザー登録・ログイン
+- JWT 認証によるセキュアなセッション管理
 
-- コミットメッセージに Issue を紐づけ
-- 特にそのコミットによって、紐づいている Issue の対応が完了する想定の場合は、以下のようにする
+### 2. 食材選択
 
-```bash
-git commit -m "add: ログイン画面を実装 (closes #12)"
-```
+- カテゴリ別の食材マスタから選択
+- カスタム食材の手動入力
+- 選択状態の永続化（LocalStorage）
 
-→ PR マージ時に Issue が自動で閉じる
+### 3. レシピ生成条件の設定
 
-- Pull Request (PR) を作成し、レビューして main にマージ
+- ジャンル（和食、洋食、中華など）
+- 難易度（超簡単、簡単、普通、難しい）
+- 調理時間（15 分以内、30 分以内など）
+- 人数（1〜10 人分）
 
-- Project Board をカンバンとして利用
+### 4. AI レシピ提案
 
-カラム: `Todo` → `In Progress` → `Done`
+- 選択した食材と条件に基づいて、AI が 3 つのレシピを生成
+- レシピ詳細（材料、手順、調理時間など）の表示
+- レシピ画像の自動生成
 
+### 5. 調理記録管理
+
+- 作ったレシピの記録作成
+- 評価（星 5 段階）とメモの保存
+- 調理記録の一覧表示・詳細確認
+- 調理記録の編集・削除
+
+### 6. レスポンシブデザイン
+
+- スマートフォン、タブレット、デスクトップに対応
+- Mantine UI による洗練された UI/UX
+
+## 🛠️ 使用技術
+
+### Frontend
+
+- **フレームワーク**: Next.js (App Router)
+- **言語**: TypeScript
+- **UI ライブラリ**: Mantine UI
+- **状態管理**: Zustand
+- **データフェッチング**: TanStack Query (React Query)
+- **HTTP クライアント**: Axios
+- **フォーム管理**: React Hook Form + Zod
+- **アイコン**: Heroicons
+
+### Backend
+
+- **フレームワーク**: NestJS
+- **言語**: TypeScript
+- **ORM**: Prisma
+- **データベース**: Supabase (PostgreSQL)
+- **認証**: Passport + JWT
+- **パスワードハッシュ化**: bcrypt
+- **バリデーション**: class-validator + class-transformer
+- **画像処理**: Sharp
+
+### インフラ・デプロイ
+
+- **フロントエンド**: Vercel
+- **バックエンド**: Render
+- **データベース**: Supabase
