@@ -12,6 +12,7 @@ import {
   Center,
   Loader,
   Divider,
+  Grid,
 } from '@mantine/core'
 import { MainLayout } from '@/components/layout'
 import { RecordCard } from '@/components/record'
@@ -171,11 +172,13 @@ export default function HomePage() {
                 </Stack>
               </Paper>
             ) : (
-              <Stack gap="md">
+              <Grid gutter="md">
                 {recentRecords.map((record) => (
-                  <RecordCard key={record.id} record={record} />
+                  <Grid.Col key={record.id} span={{ base: 12, sm: 6, lg: 4 }}>
+                    <RecordCard record={record} />
+                  </Grid.Col>
                 ))}
-              </Stack>
+              </Grid>
             )}
           </Stack>
         </Stack>
