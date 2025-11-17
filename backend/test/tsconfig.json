@@ -11,13 +11,11 @@
     "strict": true,
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "baseUrl": ".",
+    "types": ["jest", "node"],
+    "baseUrl": "..",
     "paths": {
       "@/*": ["src/*"]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test", "prisma"]
+  "include": ["**/*.ts", "../src/**/*.ts"]
 }

@@ -77,7 +77,7 @@ export const RecordCard = ({ record }: RecordCardProps) => {
           variant="light"
           fullWidth
           mt="md"
-          onClick={() => router.push(`/records/${record.id}`)}
+          onClick={() => router.push(`/records?id=${record.id}`)}
         >
           詳細を見る
         </Button>
