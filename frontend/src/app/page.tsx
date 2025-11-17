@@ -15,14 +15,16 @@ import {
 } from '@mantine/core'
 import { MainLayout } from '@/components/layout'
 import { RecordCard } from '@/components/record'
-import { useAuth } from '@/lib/hooks'
+import { useAuth, useRecords, useRecipeSearchClear } from '@/lib/hooks'
 import { useAuthStore } from '@/lib/store'
-import { useRecords } from '@/lib/hooks'
 
 export default function HomePage() {
   const router = useRouter()
   const { isAuthenticated } = useAuth()
   const isAuthRestored = useAuthStore((state) => state.isAuthRestored)
+
+  // レシピ検索関連のストアを一括クリアする関数
+  const clearRecipeSearch = useRecipeSearchClear()
 
   // 認証済みの場合のみ調理記録を取得
   const { data: recordsData } = useRecords(
@@ -33,6 +35,13 @@ export default function HomePage() {
   // データの取得
   const recordsCount = recordsData?.total || 0
   const recentRecords = recordsData?.records || []
+
+  // 新規レシピ検索開始ハンドラ
+  const handleStartNewSearch = () => {
+    // 前回の検索状態をクリアして新鮮な状態で開始
+    clearRecipeSearch()
+    router.push('/ingredients')
+  }
 
   // 認証復元中
   if (!isAuthRestored) {
@@ -88,7 +97,7 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   leftSection={<span>🥕</span>}
-                  onClick={() => router.push('/ingredients')}
+                  onClick={handleStartNewSearch}
                 >
                   食材を選んでレシピを探す
                 </Button>
@@ -156,7 +165,7 @@ export default function HomePage() {
                   <Text size="sm" c="dimmed">
                     レシピを作って記録を残しましょう！
                   </Text>
-                  <Button variant="light" onClick={() => router.push('/ingredients')}>
+                  <Button variant="light" onClick={handleStartNewSearch}>
                     レシピを探す
                   </Button>
                 </Stack>

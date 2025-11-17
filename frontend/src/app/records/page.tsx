@@ -6,14 +6,24 @@ import { Container, Title, Stack, Button, Text, Center, Loader, Alert, Group } f
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { MainLayout } from '@/components/layout'
 import { RecordList } from '@/components/record'
-import { useRecords } from '@/lib/hooks'
+import { useRecords, useRecipeSearchClear } from '@/lib/hooks'
 
 const RecordsPage = () => {
   const router = useRouter()
   const [offset, setOffset] = useState(0)
   const limit = 20
 
+  // レシピ検索関連のストアを一括クリアする関数
+  const clearRecipeSearch = useRecipeSearchClear()
+
   const { data, isLoading, error } = useRecords({ limit, offset })
+
+  // 新規レシピ検索開始ハンドラ
+  const handleStartNewSearch = () => {
+    // 前回の検索状態をクリアして新鮮な状態で開始
+    clearRecipeSearch()
+    router.push('/ingredients')
+  }
 
   // ローディング
   if (isLoading && offset === 0) {
@@ -57,7 +67,7 @@ const RecordsPage = () => {
               まだ調理記録がありません
             </Text>
             <Group>
-              <Button size="lg" onClick={() => router.push('/ingredients')}>
+              <Button size="lg" onClick={handleStartNewSearch}>
                 レシピを探す
               </Button>
               <Button size="lg" variant="outline" onClick={() => router.push('/')}>

@@ -117,8 +117,8 @@ const IngredientsPage = () => {
           </Stack>
 
           <Group justify="space-between" mt="xl" mb="xl">
-            <Button variant="outline" onClick={() => router.back()}>
-              戻る
+            <Button variant="outline" onClick={() => router.push('/')}>
+              トップに戻る
             </Button>
             <Button onClick={handleNext} disabled={selectedIngredients.length < 2}>
               次へ（条件指定）

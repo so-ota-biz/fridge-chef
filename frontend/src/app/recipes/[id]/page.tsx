@@ -6,7 +6,7 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { modals } from '@mantine/modals'
 import { MainLayout } from '@/components/layout'
 import { RecipeDetail } from '@/components/recipe'
-import { useRecipe, useCreateRecord } from '@/lib/hooks'
+import { useRecipe, useCreateRecord, useRecipeSearchClear } from '@/lib/hooks'
 
 const RecipeDetailPage = () => {
   const router = useRouter()
@@ -18,6 +18,9 @@ const RecipeDetailPage = () => {
 
   // 調理記録作成
   const { mutate: createRecord, isPending } = useCreateRecord()
+
+  // レシピ検索関連のストアを一括クリアする関数
+  const clearRecipeSearch = useRecipeSearchClear()
 
   // レシピ採用ハンドラ
   const handleAdoptRecipe = () => {
@@ -36,6 +39,9 @@ const RecipeDetailPage = () => {
           { recipeId },
           {
             onSuccess: (data) => {
+              // レシピ検索関連の状態を一括クリア
+              clearRecipeSearch()
+              // 調理記録詳細ページへ遷移
               router.push(`/records/${data.id}`)
             },
             onError: () => {
