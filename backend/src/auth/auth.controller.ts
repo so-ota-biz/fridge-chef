@@ -7,7 +7,6 @@ import {
   UseGuards,
   Get,
   Request,
-  Res,
   UnauthorizedException,
   Logger,
 } from '@nestjs/common'
@@ -19,91 +18,14 @@ import { AuthResponseDto } from '@/auth/dto/auth-response.dto'
 import { ConfigService } from '@nestjs/config'
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard'
 import type { RequestWithUser } from '@/auth/types/request-with-user.type'
-import type { Response, CookieOptions } from 'express'
-import { randomBytes } from 'crypto'
-import { TokenConfigUtil } from '@/common/utils/token-config.util'
-
-type RequestWithCookies = Request & { cookies?: Record<string, string | undefined> }
-
 @Controller('auth')
 export class AuthController {
-  private readonly ACCESS_TOKEN_MAX_AGE: number
-  private readonly REFRESH_TOKEN_MAX_AGE: number
-  private readonly CSRF_TOKEN_MAX_AGE: number
+  private readonly logger = new Logger(AuthController.name)
 
   constructor(
     private readonly authService: AuthService,
     private readonly configService: ConfigService,
-  ) {
-    // 環境変数から期限を取得（開発環境では短く設定可能）
-    this.ACCESS_TOKEN_MAX_AGE = TokenConfigUtil.getAccessTokenMaxAge(this.configService)
-    this.REFRESH_TOKEN_MAX_AGE = TokenConfigUtil.getRefreshTokenMaxAge(this.configService)
-    this.CSRF_TOKEN_MAX_AGE = TokenConfigUtil.getCsrfTokenMaxAge(this.configService)
-  }
-
-  private readonly logger = new Logger(AuthController.name)
-
-  private generateCsrfToken(): string {
-    return randomBytes(32).toString('hex')
-  }
-
-  private buildCookieOptions(maxAgeMs: number, httpOnly: boolean): CookieOptions {
-    const isProduction = process.env.NODE_ENV === 'production'
-    let secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
-    const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')?.toLowerCase()
-    let sameSite: CookieOptions['sameSite']
-
-    // プロダクション環境では、クロスドメインでのクッキー共有のためにsameSite='none'を使用
-    if (isProduction) {
-      sameSite = 'none'
-      secure = true // sameSite='none'にはsecure=trueが必須
-    } else {
-      // 開発環境では既存のロジックを使用
-      switch (sameSiteEnv) {
-        case 'strict':
-          sameSite = 'strict'
-          break
-        case 'none':
-          sameSite = 'none'
-          break
-        case 'lax':
-        case undefined:
-        case '':
-          sameSite = 'lax'
-          break
-        default:
-          this.logger.warn(
-            `COOKIE_SAMESITE=${sameSiteEnv} はサポートされていません。lax を適用します。`,
-          )
-          sameSite = 'lax'
-          break
-      }
-      if (sameSite === 'none' && !secure) {
-        this.logger.warn(
-          'COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。',
-        )
-        secure = true
-      }
-    }
-
-    const domain = this.configService.get<string>('COOKIE_DOMAIN') || undefined
-    return {
-      httpOnly,
-      secure,
-      sameSite,
-      domain,
-      path: '/',
-      maxAge: maxAgeMs,
-    }
-  }
-
-  private cookieOptions(maxAgeMs: number): CookieOptions {
-    return this.buildCookieOptions(maxAgeMs, true)
-  }
-
-  private csrfCookieOptions(maxAgeMs: number): CookieOptions {
-    return this.buildCookieOptions(maxAgeMs, false) // JSで読み取れる必要がある
-  }
+  ) {}
 
   /**
    * サインアップ
@@ -121,20 +43,9 @@ export class AuthController {
    */
   @Post('signin')
   @HttpCode(HttpStatus.OK)
-  async signIn(
-    @Body() signInDto: SignInDto,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<{ user: AuthResponseDto['user'] }> {
+  async signIn(@Body() signInDto: SignInDto): Promise<AuthResponseDto> {
     const result = await this.authService.signIn(signInDto)
-
-    // アクセス（15分）とリフレッシュ（7日）のCookieを設定
-    res.cookie('accessToken', result.accessToken, this.cookieOptions(this.ACCESS_TOKEN_MAX_AGE))
-    res.cookie('refreshToken', result.refreshToken, this.cookieOptions(this.REFRESH_TOKEN_MAX_AGE))
-    // CSRFトークンをセット（24時間）
-    const csrfToken = this.generateCsrfToken()
-    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(this.CSRF_TOKEN_MAX_AGE))
-
-    return { user: result.user }
+    return result
   }
 
   /**
@@ -144,21 +55,14 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refreshToken(
-    @Request() req: RequestWithCookies,
-    @Res({ passthrough: true }) res: Response,
-  ): Promise<{ ok: true }> {
-    const refresh = req.cookies?.refreshToken
-    if (!refresh) {
+    @Body() body: { refreshToken: string },
+  ): Promise<{ accessToken: string; refreshToken: string }> {
+    const { refreshToken } = body
+    if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is missing')
     }
-    const tokens = await this.authService.refreshToken(refresh)
-
-    res.cookie('accessToken', tokens.accessToken, this.cookieOptions(this.ACCESS_TOKEN_MAX_AGE))
-    res.cookie('refreshToken', tokens.refreshToken, this.cookieOptions(this.REFRESH_TOKEN_MAX_AGE))
-    // CSRFトークンもローテーション
-    const csrfToken = this.generateCsrfToken()
-    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(this.CSRF_TOKEN_MAX_AGE))
-    return { ok: true }
+    const tokens = await this.authService.refreshToken(refreshToken)
+    return tokens
   }
 
   /**
@@ -168,23 +72,9 @@ export class AuthController {
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
-  logout(@Res({ passthrough: true }) res: Response): void {
-    const clearOpts = this.cookieOptions(0)
-    res.clearCookie('accessToken', clearOpts)
-    res.clearCookie('refreshToken', clearOpts)
-    res.clearCookie('csrfToken', this.csrfCookieOptions(0))
-  }
-
-  /**
-   * CSRFトークン発行（必要時）
-   */
-  @Get('csrf')
-  @HttpCode(HttpStatus.OK)
-  issueCsrf(@Res({ passthrough: true }) res: Response): { ok: true; csrfToken: string } {
-    const csrfToken = this.generateCsrfToken()
-    res.cookie('csrfToken', csrfToken, this.csrfCookieOptions(this.CSRF_TOKEN_MAX_AGE))
-    // クロスドメイン問題のバックアップとしてレスポンスボディにも含める
-    return { ok: true, csrfToken }
+  logout(): void {
+    // ローカルストレージベースのため、サーバー側では特別な処理不要
+    // クライアント側でLocalStorageからトークンを削除
   }
 
   /**
