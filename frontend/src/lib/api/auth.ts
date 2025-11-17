@@ -69,9 +69,25 @@ export const logout = async (): Promise<void> => {
 /** CSRFトークン初期化（初回アクセス時やトークンが存在しない場合） */
 export const initializeCsrf = async (): Promise<void> => {
   try {
-    await apiClient.get('/auth/csrf')
+    console.log('[CSRF-DEBUG] Requesting CSRF token from /auth/csrf')
+    const response = await apiClient.get<{ ok: boolean; csrfToken: string }>('/auth/csrf')
+    console.log('[CSRF-DEBUG] CSRF response received:', response.status, 'Cookies after:', document.cookie.split(';').length)
+    
+    // CSRFクッキーが設定されていない場合のバックアップ
+    const hasCsrfCookie = document.cookie.split(';').some(cookie => 
+      cookie.trim().startsWith('csrfToken=')
+    )
+    if (response.data.csrfToken && !hasCsrfCookie) {
+      console.log('[CSRF-DEBUG] Setting CSRF token manually as fallback')
+      const domain = window.location.hostname.includes('vercel.app') ? '.vercel.app' : undefined
+      const domainPart = domain ? `; domain=${domain}` : ''
+      document.cookie = `csrfToken=${response.data.csrfToken}; path=/; secure; samesite=none${domainPart}`
+    }
   } catch (err: unknown) {
     // CSRF初期化の失敗はログに記録するが、アプリの動作は継続
-    console.warn('CSRF token initialization failed:', err)
+    console.warn('[CSRF-DEBUG] CSRF token initialization failed:', err)
+    if (err instanceof Error) {
+      console.warn('[CSRF-DEBUG] Error details:', err.message)
+    }
   }
 }
