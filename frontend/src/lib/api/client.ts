@@ -74,7 +74,10 @@ apiClient.interceptors.request.use(
 // ========================================
 apiClient.interceptors.response.use(
   (response) => {
-    // 正常なレスポンスはそのまま返す
+    // CSRFエンドポイントからのレスポンスをログ出力
+    if (response.config.url?.includes('/auth/csrf')) {
+      console.log('[CSRF-DEBUG] CSRF response status:', response.status)
+    }
     return response
   },
   async (error: AxiosError) => {
