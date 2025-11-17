@@ -50,8 +50,8 @@ const RecordDetailPage = () => {
       {
         id: recordId,
         data: {
-          // rating=0の場合は未評価として扱い、ratingを送信しない
-          ...(rating > 0 && { rating }),
+          // rating=0の場合はnullとして送信して評価をクリア
+          rating: rating > 0 ? rating : null,
           memo,
         },
       },

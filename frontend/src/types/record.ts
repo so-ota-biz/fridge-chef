@@ -19,7 +19,7 @@ export interface Record {
  * レシピ情報を含む調理記録
  */
 export interface RecordWithRecipe extends Record {
-  recipe: Recipe
+  recipe: Recipe | null
 }
 
 /**
@@ -33,7 +33,7 @@ export interface CreateRecordRequest {
  * 調理記録更新リクエスト
  */
 export interface UpdateRecordRequest {
-  rating?: number
+  rating?: number | null
   memo?: string
 }
 

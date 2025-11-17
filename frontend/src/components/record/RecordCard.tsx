@@ -24,6 +24,27 @@ export const RecordCard = ({ record }: RecordCardProps) => {
     minute: '2-digit',
   })
 
+  // レシピ情報が存在しない場合の防御的処理
+  if (!record.recipe) {
+    return (
+      <Card shadow="sm" padding="lg" radius="md" withBorder>
+        <Stack gap="xs" mt="md">
+          <Text fw={500} c="dimmed">
+            レシピ情報が見つかりません
+          </Text>
+          <Text size="sm" c="dimmed">
+            {formattedDate}
+          </Text>
+          {record.memo && (
+            <Text size="sm" lineClamp={2}>
+              {record.memo}
+            </Text>
+          )}
+        </Stack>
+      </Card>
+    )
+  }
+
   return (
     <Card shadow="sm" padding="lg" radius="md" withBorder>
       <Card.Section>

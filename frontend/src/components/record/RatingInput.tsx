@@ -14,13 +14,22 @@ interface RatingInputProps {
  * 星評価入力コンポーネント
  */
 export const RatingInput = ({ value, onChange, max = 5 }: RatingInputProps) => {
+  const handleClick = (rating: number) => {
+    // 同じ星をクリックした場合は評価を0にする（評価をクリア）
+    if (value === rating) {
+      onChange(0)
+    } else {
+      onChange(rating)
+    }
+  }
+
   return (
     <Group gap="xs">
       {Array.from({ length: max }, (_, i) => i + 1).map((rating) => (
         <ActionIcon
           key={rating}
           variant="transparent"
-          onClick={() => onChange(rating)}
+          onClick={() => handleClick(rating)}
           size="lg"
           style={{ cursor: 'pointer' }}
         >

@@ -9,7 +9,7 @@ export type RecordResponse = PrismaRecord
  * レシピ情報を含む調理記録レスポンス型
  */
 export type RecordWithRecipeResponse = PrismaRecord & {
-  recipe: PrismaRecipe
+  recipe: PrismaRecipe | null
 }
 
 /**
