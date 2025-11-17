@@ -10,7 +10,7 @@ import {
   ServingsSelector,
   GenreSelector,
 } from '@/components/condition'
-import { useIngredientStore, useConditionStore } from '@/lib/store'
+import { useIngredientStore, useConditionStore, useRecipeStore } from '@/lib/store'
 
 const ConditionsPage = () => {
   const router = useRouter()
@@ -29,6 +29,9 @@ const ConditionsPage = () => {
     setCookingTime,
     setServings,
   } = useConditionStore()
+
+  // レシピストア
+  const { clearGeneratedRecipes } = useRecipeStore()
 
   // 食材が選択されていない場合は警告
   if (selectedIngredients.length < 2) {
@@ -52,6 +55,8 @@ const ConditionsPage = () => {
 
   // AI提案画面へ進む
   const handleNext = () => {
+    // 新しい条件でレシピを生成するため、既存のレシピをクリア
+    clearGeneratedRecipes()
     router.push('/suggestions')
   }
 

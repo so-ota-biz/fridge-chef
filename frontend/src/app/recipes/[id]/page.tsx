@@ -71,7 +71,7 @@ const RecipeDetailPage = () => {
             レシピの取得に失敗しました。
           </Alert>
           <Group justify="center" mt="xl">
-            <Button onClick={() => router.push('/')}>トップに戻る</Button>
+            <Button onClick={() => router.push('/suggestions')}>レシピ一覧に戻る</Button>
           </Group>
         </Container>
       </MainLayout>
@@ -80,15 +80,15 @@ const RecipeDetailPage = () => {
 
   return (
     <MainLayout>
-      <Container size="md" mt="xl">
+      <Container size="md" mt="xl" style={{ paddingBottom: 'max(5rem, 10vh)' }}>
         <Stack gap="xl">
           {/* レシピ詳細 */}
           <RecipeDetail recipe={recipe} />
 
           {/* アクションボタン */}
           <Group justify="space-between">
-            <Button variant="outline" onClick={() => router.push('/')}>
-              トップに戻る
+            <Button variant="outline" onClick={() => router.push('/suggestions')}>
+              レシピ一覧に戻る
             </Button>
             <Button size="lg" onClick={handleAdoptRecipe} loading={isPending} disabled={isPending}>
               このレシピで調理する

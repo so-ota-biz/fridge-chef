@@ -18,28 +18,38 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 import { MainLayout } from '@/components/layout'
 import { RecipeCard } from '@/components/recipe'
 import { useRecipeGeneration } from '@/lib/hooks'
-import { useIngredientStore, useConditionStore } from '@/lib/store'
+import { useIngredientStore, useConditionStore, useRecipeStore } from '@/lib/store'
 
 const SuggestionsPage = () => {
   const router = useRouter()
 
   const { selectedIngredients } = useIngredientStore()
   const { genre, difficulty, cookingTime, servings } = useConditionStore()
+  const { generatedRecipes, setGeneratedRecipes, clearGeneratedRecipes } = useRecipeStore()
 
   const { mutate, data, isPending, isError, error } = useRecipeGeneration()
 
   useEffect(() => {
-    if (selectedIngredients.length < 2 || data) {
+    // ストアに既にデータがある、または生成中/生成済みの場合はスキップ
+    if (selectedIngredients.length < 2 || generatedRecipes || data) {
       return
     }
 
-    mutate({
-      ingredients: selectedIngredients,
-      genre,
-      difficulty,
-      cookingTime,
-      servings,
-    })
+    mutate(
+      {
+        ingredients: selectedIngredients,
+        genre,
+        difficulty,
+        cookingTime,
+        servings,
+      },
+      {
+        onSuccess: (result) => {
+          // 生成成功時にストアに保存
+          setGeneratedRecipes(result)
+        },
+      },
+    )
   }, [])
 
   if (selectedIngredients.length < 2) {
@@ -101,21 +111,40 @@ const SuggestionsPage = () => {
               <Group>
                 <Button
                   onClick={() => {
-                    mutate({
-                      ingredients: selectedIngredients,
-                      genre,
-                      difficulty,
-                      cookingTime,
-                      servings,
-                    })
+                    mutate(
+                      {
+                        ingredients: selectedIngredients,
+                        genre,
+                        difficulty,
+                        cookingTime,
+                        servings,
+                      },
+                      {
+                        onSuccess: (result) => {
+                          setGeneratedRecipes(result)
+                        },
+                      },
+                    )
                   }}
                 >
                   再試行
                 </Button>
-                <Button variant="outline" onClick={() => router.push('/conditions')}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    clearGeneratedRecipes()
+                    router.push('/conditions')
+                  }}
+                >
                   条件を変更
                 </Button>
-                <Button variant="outline" onClick={() => router.push('/ingredients')}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    clearGeneratedRecipes()
+                    router.push('/ingredients')
+                  }}
+                >
                   食材を変更
                 </Button>
               </Group>
@@ -126,7 +155,10 @@ const SuggestionsPage = () => {
     )
   }
 
-  if (!data || data.recipes.length === 0) {
+  // 表示用のデータ: mutationの結果を優先、なければストアのデータを使用
+  const recipes = data || generatedRecipes
+
+  if (!recipes || recipes.recipes.length === 0) {
     return (
       <MainLayout>
         <Container size="md" mt="xl">
@@ -140,21 +172,40 @@ const SuggestionsPage = () => {
               <Group>
                 <Button
                   onClick={() => {
-                    mutate({
-                      ingredients: selectedIngredients,
-                      genre,
-                      difficulty,
-                      cookingTime,
-                      servings,
-                    })
+                    mutate(
+                      {
+                        ingredients: selectedIngredients,
+                        genre,
+                        difficulty,
+                        cookingTime,
+                        servings,
+                      },
+                      {
+                        onSuccess: (result) => {
+                          setGeneratedRecipes(result)
+                        },
+                      },
+                    )
                   }}
                 >
                   再試行
                 </Button>
-                <Button variant="outline" onClick={() => router.push('/conditions')}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    clearGeneratedRecipes()
+                    router.push('/conditions')
+                  }}
+                >
                   条件を変更
                 </Button>
-                <Button variant="outline" onClick={() => router.push('/ingredients')}>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    clearGeneratedRecipes()
+                    router.push('/ingredients')
+                  }}
+                >
                   食材を変更
                 </Button>
               </Group>
@@ -173,17 +224,17 @@ const SuggestionsPage = () => {
             <Title order={1} mb="xs">
               レシピ提案
             </Title>
-            <Text c="dimmed">AIが{data.recipes.length}つのレシピを提案しました</Text>
+            <Text c="dimmed">AIが{recipes.recipes.length}つのレシピを提案しました</Text>
           </div>
 
-          {data.recipes.length < 3 && (
+          {recipes.recipes.length < 3 && (
             <Alert color="yellow">
-              一部のレシピ生成に失敗しました。{data.recipes.length}件のレシピを表示しています。
+              一部のレシピ生成に失敗しました。{recipes.recipes.length}件のレシピを表示しています。
             </Alert>
           )}
 
           <Grid gutter="lg">
-            {data.recipes.map((recipe) => (
+            {recipes.recipes.map((recipe) => (
               <Grid.Col key={recipe.id} span={{ base: 12, sm: 6, md: 4 }}>
                 <RecipeCard recipe={recipe} />
               </Grid.Col>
@@ -191,18 +242,31 @@ const SuggestionsPage = () => {
           </Grid>
 
           <Group justify="space-between">
-            <Button variant="outline" onClick={() => router.push('/conditions')}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                clearGeneratedRecipes()
+                router.push('/conditions')
+              }}
+            >
               条件を変更
             </Button>
             <Button
               onClick={() => {
-                mutate({
-                  ingredients: selectedIngredients,
-                  genre,
-                  difficulty,
-                  cookingTime,
-                  servings,
-                })
+                mutate(
+                  {
+                    ingredients: selectedIngredients,
+                    genre,
+                    difficulty,
+                    cookingTime,
+                    servings,
+                  },
+                  {
+                    onSuccess: (result) => {
+                      setGeneratedRecipes(result)
+                    },
+                  },
+                )
               }}
             >
               再生成
