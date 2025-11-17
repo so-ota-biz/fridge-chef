@@ -1,7 +1,21 @@
 {
-  "extends": "../tsconfig.json",
   "compilerOptions": {
-    "types": ["jest", "node"]
+    "module": "commonjs",
+    "target": "es2021",
+    "moduleResolution": "node",
+    "resolvePackageJsonExports": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strict": true,
+    "strictPropertyInitialization": false,
+    "skipLibCheck": true,
+    "types": ["jest", "node"],
+    "baseUrl": "..",
+    "paths": {
+      "@/*": ["src/*"]
+    }
   },
   "include": ["**/*.ts", "../src/**/*.ts"]
 }
