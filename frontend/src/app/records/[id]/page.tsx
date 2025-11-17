@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 import {
   Container,
   Title,
@@ -24,9 +24,10 @@ import { RatingInput } from '@/components/record'
 import { useRecord, useUpdateRecord, useDeleteRecord, useRecipe } from '@/lib/hooks'
 import { getGenreLabel, getDifficultyLabel, RECIPE_PLACEHOLDER_IMAGE } from '@/lib/utils/recipe'
 
-const RecordDetailPage = ({ params }: { params: { id: string } }) => {
+const RecordDetailPage = () => {
   const router = useRouter()
-  const recordId = parseInt(params.id)
+  const params = useParams()
+  const recordId = Number(params.id)
 
   // データ取得
   const { data: record, isLoading, error } = useRecord(recordId)
@@ -102,7 +103,7 @@ const RecordDetailPage = ({ params }: { params: { id: string } }) => {
             調理記録の取得に失敗しました
           </Alert>
           <Group justify="center" mt="xl">
-            <Button onClick={() => router.push('/records')}>一覧に戻る</Button>
+            <Button onClick={() => router.push('/')}>トップに戻る</Button>
           </Group>
         </Container>
       </MainLayout>
