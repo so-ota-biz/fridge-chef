@@ -48,6 +48,11 @@ export const MainLayout = ({ children, showNavbar = true, showFooter = true }: M
   return (
     <AppShell
       header={{ height: 60 }}
+      footer={
+        showFooter
+          ? { height: { base: '20vh', xs: '18vh', sm: '15vh', md: '12vh', lg: '10vh' } }
+          : undefined
+      }
       navbar={
         showNavbar
           ? {
@@ -69,7 +74,11 @@ export const MainLayout = ({ children, showNavbar = true, showFooter = true }: M
         </AppShell.Navbar>
       )}
 
-      <AppShell.Main>{children}</AppShell.Main>
+      <AppShell.Main
+        style={{ minHeight: 'calc(100vh - 60px)', display: 'flex', flexDirection: 'column' }}
+      >
+        <div style={{ flex: 1 }}>{children}</div>
+      </AppShell.Main>
 
       {showFooter && (
         <AppShell.Footer>

@@ -1,31 +1,43 @@
-import { Container, Group, Text, Anchor, Stack } from '@mantine/core'
+import { Container, Group, Text, Anchor, Stack, Tooltip } from '@mantine/core'
 import Link from 'next/link'
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear()
 
+  const footerLinks = [
+    { href: '/about', label: 'アプリについて', implemented: false },
+    { href: '/terms', label: '利用規約', implemented: false },
+    { href: '/privacy', label: 'プライバシーポリシー', implemented: false },
+    { href: '/contact', label: 'お問い合わせ', implemented: false },
+  ]
+
   return (
     <Container size="xl" py="md">
       <Stack gap="sm" align="center">
-        {/* コピーライト */}
         <Text size="sm" c="dimmed" ta="center">
           © {currentYear} {process.env.NEXT_PUBLIC_APP_NAME || 'FridgeChef'}. All rights reserved.
         </Text>
 
-        {/* リンク */}
         <Group gap="md" justify="center">
-          <Anchor component={Link} href="/about" size="sm" c="dimmed">
-            アプリについて
-          </Anchor>
-          <Anchor component={Link} href="/terms" size="sm" c="dimmed">
-            利用規約
-          </Anchor>
-          <Anchor component={Link} href="/privacy" size="sm" c="dimmed">
-            プライバシーポリシー
-          </Anchor>
-          <Anchor component={Link} href="/contact" size="sm" c="dimmed">
-            お問い合わせ
-          </Anchor>
+          {footerLinks.map((link) => (
+            <Tooltip key={link.href} label="準備中です" disabled={link.implemented} withArrow>
+              {link.implemented ? (
+                <Anchor
+                  component={Link}
+                  href={link.href}
+                  size="sm"
+                  c="dimmed"
+                  style={{ textDecoration: 'none' }}
+                >
+                  {link.label}
+                </Anchor>
+              ) : (
+                <Text size="sm" c="dimmed" style={{ cursor: 'not-allowed', opacity: 0.5 }}>
+                  {link.label}
+                </Text>
+              )}
+            </Tooltip>
+          ))}
         </Group>
       </Stack>
     </Container>

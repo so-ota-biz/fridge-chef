@@ -9,11 +9,9 @@ const emitAuthExpired = () => {
 
 const getCookie = (name: string): string | undefined => {
   if (!isBrowser()) return undefined
-  
+
   try {
-    const value = document.cookie
-      .split('; ')
-      .find((row) => row.startsWith(`${name}=`))
+    const value = document.cookie.split('; ').find((row) => row.startsWith(`${name}=`))
     return value ? decodeURIComponent(value.split('=')[1]) : undefined
   } catch (error) {
     // Cookie解析エラー時はundefinedを返す
@@ -40,7 +38,8 @@ apiClient.interceptors.request.use(
     // 変更系メソッドにCSRFヘッダを付与（サインイン・サインアップは除外）
     const method = (config.method ?? 'get').toLowerCase()
     const url = config.url ?? ''
-    const isMutation = method === 'post' || method === 'put' || method === 'patch' || method === 'delete'
+    const isMutation =
+      method === 'post' || method === 'put' || method === 'patch' || method === 'delete'
 
     // URLのパス部分を抽出（クエリパラメータ・フラグメント除外）
     const urlPath = url.split('?')[0].split('#')[0]
@@ -89,13 +88,17 @@ apiClient.interceptors.response.use(
         // トークンリフレッシュAPIを呼び出し（インターセプター回避のためaxios直呼び）
         const baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
         const csrf = getCookie('csrfToken')
-        await axios.post(`${baseURL}/auth/refresh`, {}, {
-          withCredentials: true,
-          headers: {
-            'Content-Type': 'application/json',
-            ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+        await axios.post(
+          `${baseURL}/auth/refresh`,
+          {},
+          {
+            withCredentials: true,
+            headers: {
+              'Content-Type': 'application/json',
+              ...(csrf ? { 'X-CSRF-Token': csrf } : {}),
+            },
           },
-        })
+        )
         // 元のリクエストを再実行
         return apiClient(originalRequest)
       } catch (refreshError) {
@@ -108,13 +111,17 @@ apiClient.interceptors.response.use(
 
             // 新しいトークンでリフレッシュを再試行
             const newCsrf = getCookie('csrfToken')
-            await axios.post(`${baseURL}/auth/refresh`, {}, {
-              withCredentials: true,
-              headers: {
-                'Content-Type': 'application/json',
-                ...(newCsrf ? { 'X-CSRF-Token': newCsrf } : {}),
+            await axios.post(
+              `${baseURL}/auth/refresh`,
+              {},
+              {
+                withCredentials: true,
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...(newCsrf ? { 'X-CSRF-Token': newCsrf } : {}),
+                },
               },
-            })
+            )
             // 元のリクエストを再実行
             return apiClient(originalRequest)
           } catch (recoveryError) {
@@ -135,7 +142,8 @@ apiClient.interceptors.response.use(
       const data = (error.response?.data ?? {}) as { message?: string | string[]; error?: string }
       let backendMessage: string | undefined
       if (typeof data.message === 'string') backendMessage = data.message
-      else if (Array.isArray(data.message) && data.message.length > 0) backendMessage = data.message[0]
+      else if (Array.isArray(data.message) && data.message.length > 0)
+        backendMessage = data.message[0]
       else if (typeof data.error === 'string') backendMessage = data.error
 
       if (backendMessage) {
