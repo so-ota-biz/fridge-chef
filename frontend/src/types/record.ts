@@ -1,3 +1,5 @@
+import type { Recipe } from './recipe'
+
 /**
  * 調理記録
  */
@@ -11,6 +13,13 @@ export interface Record {
   userImageUrl: string | null
   createdAt: string
   updatedAt: string
+}
+
+/**
+ * レシピ情報を含む調理記録
+ */
+export interface RecordWithRecipe extends Record {
+  recipe: Recipe
 }
 
 /**
@@ -32,7 +41,7 @@ export interface UpdateRecordRequest {
  * 調理記録一覧レスポンス
  */
 export interface RecordsListResponse {
-  records: Record[]
+  records: RecordWithRecipe[]
   total: number
 }
 

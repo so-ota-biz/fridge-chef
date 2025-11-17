@@ -3,19 +3,17 @@
 import { Card, Image, Text, Group, Stack, Button } from '@mantine/core'
 import { useRouter } from 'next/navigation'
 import { RatingDisplay } from '@/components/record/RatingDisplay'
-import type { Record } from '@/types/record'
+import type { RecordWithRecipe } from '@/types/record'
 import { RECIPE_PLACEHOLDER_IMAGE } from '@/lib/utils/recipe'
 
 interface RecordCardProps {
-  record: Record
-  recipeTitle?: string
-  recipeImageUrl?: string
+  record: RecordWithRecipe
 }
 
 /**
  * 調理記録カードコンポーネント
  */
-export const RecordCard = ({ record, recipeTitle, recipeImageUrl }: RecordCardProps) => {
+export const RecordCard = ({ record }: RecordCardProps) => {
   const router = useRouter()
 
   const formattedDate = new Date(record.cookedAt).toLocaleString('ja-JP', {
@@ -30,16 +28,16 @@ export const RecordCard = ({ record, recipeTitle, recipeImageUrl }: RecordCardPr
     <Card shadow="sm" padding="lg" radius="md" withBorder>
       <Card.Section>
         <Image
-          src={recipeImageUrl || RECIPE_PLACEHOLDER_IMAGE}
+          src={record.recipe.imageUrl || RECIPE_PLACEHOLDER_IMAGE}
           height={160}
-          alt={recipeTitle || 'レシピ'}
+          alt={record.recipe.title}
         />
       </Card.Section>
 
       <Stack gap="xs" mt="md">
         <Group justify="space-between" align="flex-start">
           <Text fw={500} lineClamp={1}>
-            {recipeTitle || 'レシピ'}
+            {record.recipe.title}
           </Text>
           <RatingDisplay value={record.rating || 0} size={16} />
         </Group>

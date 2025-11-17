@@ -47,7 +47,14 @@ const RecordDetailPage = () => {
   // 保存
   const handleSave = () => {
     updateRecord(
-      { id: recordId, data: { rating, memo } },
+      {
+        id: recordId,
+        data: {
+          // rating=0の場合は未評価として扱い、ratingを送信しない
+          ...(rating > 0 && { rating }),
+          memo,
+        },
+      },
       {
         onSuccess: () => {
           router.push('/records')

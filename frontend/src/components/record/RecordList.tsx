@@ -2,10 +2,10 @@
 
 import { Grid } from '@mantine/core'
 import { RecordCard } from '@/components/record/RecordCard'
-import type { Record } from '@/types/record'
+import type { RecordWithRecipe } from '@/types/record'
 
 interface RecordListProps {
-  records: Record[]
+  records: RecordWithRecipe[]
 }
 
 /**
