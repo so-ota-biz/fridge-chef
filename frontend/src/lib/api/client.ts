@@ -57,14 +57,11 @@ apiClient.interceptors.request.use(
       const csrf = getCookie('csrfToken')
       if (csrf && config.headers) {
         config.headers['X-CSRF-Token'] = csrf
+        // 本番環境一時調査用ログ
+        console.log(`[CSRF-DEBUG] Token set for ${method} ${url}:`, csrf.substring(0, 8) + '...', 'Cookie count:', document.cookie.split(';').length)
       } else {
-        // Development-only detailed logging
-        if (process.env.NODE_ENV === 'development') {
-          const cookieNames = document.cookie.split(';').map(c => c.trim().split('=')[0])
-          console.warn(`CSRF token missing for ${method} ${url}. Available cookie names:`, cookieNames)
-        } else {
-          console.warn(`CSRF token missing for ${method} ${url}`)
-        }
+        // 本番環境一時調査用ログ
+        console.warn(`[CSRF-DEBUG] Token missing for ${method} ${url}. All cookies:`, document.cookie)
       }
     }
     return config
