@@ -85,7 +85,7 @@ const IngredientsPage = () => {
 
   return (
     <MainLayout>
-      <Container size="lg" mt="xl" pb={100}>
+      <Container size="lg" mt="xl" pb={{ base: '8rem', sm: '5rem', md: '3rem' }}>
         <Stack gap="xl">
           <div>
             <Title order={1} mb="xs">

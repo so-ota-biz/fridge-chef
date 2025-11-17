@@ -62,7 +62,7 @@ const ConditionsPage = () => {
 
   return (
     <MainLayout>
-      <Container size="md" mt="xl" pb={100}>
+      <Container size="md" mt="xl" pb={{ base: '8rem', sm: '5rem', md: '3rem' }}>
         <Stack gap="xl">
           {/* ヘッダー */}
           <div>
