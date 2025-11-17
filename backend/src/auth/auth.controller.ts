@@ -52,31 +52,40 @@ export class AuthController {
     let secure = this.configService.get<string>('COOKIE_SECURE') === 'true' || isProduction
     const sameSiteEnv = this.configService.get<string>('COOKIE_SAMESITE')?.toLowerCase()
     let sameSite: CookieOptions['sameSite']
-    switch (sameSiteEnv) {
-      case 'strict':
-        sameSite = 'strict'
-        break
-      case 'none':
-        sameSite = 'none'
-        break
-      case 'lax':
-      case undefined:
-      case '':
-        sameSite = 'lax'
-        break
-      default:
+
+    // プロダクション環境では、クロスドメインでのクッキー共有のためにsameSite='none'を使用
+    if (isProduction) {
+      sameSite = 'none'
+      secure = true // sameSite='none'にはsecure=trueが必須
+    } else {
+      // 開発環境では既存のロジックを使用
+      switch (sameSiteEnv) {
+        case 'strict':
+          sameSite = 'strict'
+          break
+        case 'none':
+          sameSite = 'none'
+          break
+        case 'lax':
+        case undefined:
+        case '':
+          sameSite = 'lax'
+          break
+        default:
+          this.logger.warn(
+            `COOKIE_SAMESITE=${sameSiteEnv} はサポートされていません。lax を適用します。`,
+          )
+          sameSite = 'lax'
+          break
+      }
+      if (sameSite === 'none' && !secure) {
         this.logger.warn(
-          `COOKIE_SAMESITE=${sameSiteEnv} はサポートされていません。lax を適用します。`,
+          'COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。',
         )
-        sameSite = 'lax'
-        break
+        secure = true
+      }
     }
-    if (sameSite === 'none' && !secure) {
-      this.logger.warn(
-        'COOKIE_SAMESITE=none には Secure=true が必須のため、secure を強制的に有効化します。',
-      )
-      secure = true
-    }
+
     const domain = this.configService.get<string>('COOKIE_DOMAIN') || undefined
     return {
       httpOnly,
