@@ -7,6 +7,16 @@ import { useRecipeSearchClear } from '@/lib/hooks/useRecipeSearchClear'
 import * as authApi from '@/lib/api/auth'
 import type { SignUpRequest, SignInRequest } from '@/types/auth'
 
+// CSRFクッキー設定完了を確実に待機するユーティリティ
+const waitForCookie = async (cookieName: string, maxAttempts = 20): Promise<boolean> => {
+  for (let i = 0; i < maxAttempts; i++) {
+    const cookie = document.cookie.split(';').find(c => c.trim().startsWith(`${cookieName}=`))
+    if (cookie) return true
+    await new Promise(resolve => setTimeout(resolve, 50)) // 50ms間隔でチェック
+  }
+  return false
+}
+
 // ========================================
 // サインアップフック
 // ========================================
@@ -48,6 +58,12 @@ export const useSignIn = () => {
 
       // CSRFトークンを確実に初期化
       await authApi.initializeCsrf()
+      
+      // CSRFクッキー設定完了を確実に待機
+      const csrfReady = await waitForCookie('csrfToken')
+      if (!csrfReady) {
+        console.warn('[AUTH-DEBUG] CSRF cookie not detected after signin')
+      }
 
       // TOPページにリダイレクト
       router.push('/')
