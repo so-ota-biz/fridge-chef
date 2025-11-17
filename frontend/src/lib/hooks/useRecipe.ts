@@ -14,7 +14,10 @@ import type { RecipeDetailResponse } from '@/types/recipe'
  * @param options - useQueryのオプション
  * @returns TanStack Query の useQuery 結果
  */
-export const useRecipe = (id: number, options?: Partial<UseQueryOptions<RecipeDetailResponse, Error>>) => {
+export const useRecipe = (
+  id: number,
+  options?: Partial<UseQueryOptions<RecipeDetailResponse, Error>>,
+) => {
   return useQuery<RecipeDetailResponse, Error>({
     queryKey: ['recipe', id],
     queryFn: () => getRecipe(id),

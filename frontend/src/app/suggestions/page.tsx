@@ -39,7 +39,7 @@ const SuggestionsPage = () => {
       servings,
     })
   }, [selectedIngredients, genre, difficulty, cookingTime, servings, mutate])
-  
+
   // mutation成功時にストアに保存
   useEffect(() => {
     if (data && !generatedRecipes) {
@@ -49,11 +49,13 @@ const SuggestionsPage = () => {
 
   useEffect(() => {
     // 既に試行済み、または条件が満たされていない場合はスキップ
-    if (hasTriedGeneration.current || 
-        selectedIngredients.length < 2 || 
-        generatedRecipes || 
-        data || 
-        isPending) {
+    if (
+      hasTriedGeneration.current ||
+      selectedIngredients.length < 2 ||
+      generatedRecipes ||
+      data ||
+      isPending
+    ) {
       return
     }
 

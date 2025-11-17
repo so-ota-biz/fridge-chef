@@ -36,7 +36,7 @@ export const signUp = async (data: SignUpRequest): Promise<SignUpResponse> => {
 export const signIn = async (data: SignInRequest): Promise<SignInResponse> => {
   try {
     const response = await apiClient.post<SignInResponse>('/auth/signin', data)
-    
+
     // トークンをローカルストレージに保存
     if (response.data.accessToken) {
       localStorage.setItem('accessToken', response.data.accessToken)
@@ -44,7 +44,7 @@ export const signIn = async (data: SignInRequest): Promise<SignInResponse> => {
     if (response.data.refreshToken) {
       localStorage.setItem('refreshToken', response.data.refreshToken)
     }
-    
+
     return response.data
   } catch (err: unknown) {
     throw new Error(

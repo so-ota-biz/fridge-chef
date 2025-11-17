@@ -126,7 +126,12 @@ const RecipeDetailPageContent = () => {
             </Button>
             {/* 調理記録から来た場合は「このレシピで調理する」ボタンを非表示 */}
             {!fromRecord && (
-              <Button size="lg" onClick={handleAdoptRecipe} loading={isPending} disabled={isPending}>
+              <Button
+                size="lg"
+                onClick={handleAdoptRecipe}
+                loading={isPending}
+                disabled={isPending}
+              >
                 このレシピで調理する
               </Button>
             )}
@@ -139,13 +144,15 @@ const RecipeDetailPageContent = () => {
 
 const RecipeDetailPage = () => {
   return (
-    <Suspense fallback={
-      <MainLayout>
-        <Center h="50vh">
-          <Loader size="xl" />
-        </Center>
-      </MainLayout>
-    }>
+    <Suspense
+      fallback={
+        <MainLayout>
+          <Center h="50vh">
+            <Loader size="xl" />
+          </Center>
+        </MainLayout>
+      }
+    >
       <RecipeDetailPageContent />
     </Suspense>
   )
