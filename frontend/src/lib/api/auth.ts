@@ -79,16 +79,37 @@ export const initializeCsrf = async (): Promise<void> => {
     )
     if (response.data.csrfToken && !hasCsrfCookie) {
       console.log('[CSRF-DEBUG] Setting CSRF token manually as fallback')
-      const domain = window.location.hostname.includes('vercel.app') ? '.vercel.app' : undefined
-      const domainPart = domain ? `; domain=${domain}` : ''
-      document.cookie = `csrfToken=${response.data.csrfToken}; path=/; secure; samesite=none${domainPart}`
       
-      // 設定直後の確認
+      // 複数パターンでCookie設定を試行
+      const token = response.data.csrfToken
+      const patterns = [
+        `csrfToken=${token}; path=/; secure; samesite=none`,
+        `csrfToken=${token}; path=/; secure; samesite=lax`,
+        `csrfToken=${token}; path=/; samesite=none`,
+        `csrfToken=${token}; path=/`,
+        `csrfToken=${token}`
+      ]
+      
+      for (let i = 0; i < patterns.length; i++) {
+        console.log(`[CSRF-DEBUG] Trying pattern ${i + 1}:`, patterns[i])
+        document.cookie = patterns[i]
+        
+        // 即座に確認
+        const check = document.cookie.split(';').find(c => c.trim().startsWith('csrfToken='))
+        console.log(`[CSRF-DEBUG] Pattern ${i + 1} result:`, check ? 'Found' : 'Not found')
+        
+        if (check) {
+          console.log(`[CSRF-DEBUG] Pattern ${i + 1} succeeded`)
+          break
+        }
+      }
+      
+      // 最終確認
       setTimeout(() => {
-        const afterSet = document.cookie.split(';').find(c => c.trim().startsWith('csrfToken='))
-        console.log('[CSRF-DEBUG] Cookie after manual set:', afterSet ? 'Found' : 'Not found')
+        const finalCheck = document.cookie.split(';').find(c => c.trim().startsWith('csrfToken='))
+        console.log('[CSRF-DEBUG] Final cookie check:', finalCheck ? 'Found' : 'Not found')
         console.log('[CSRF-DEBUG] Current domain:', window.location.hostname)
-        console.log('[CSRF-DEBUG] All cookies after set:', document.cookie)
+        console.log('[CSRF-DEBUG] All cookies final:', document.cookie)
       }, 100)
     }
   } catch (err: unknown) {
