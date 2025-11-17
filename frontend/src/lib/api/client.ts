@@ -61,7 +61,10 @@ apiClient.interceptors.request.use(
         console.log(`[CSRF-DEBUG] Token set for ${method} ${url}:`, csrf.substring(0, 8) + '...', 'Cookie count:', document.cookie.split(';').length)
       } else {
         // 本番環境一時調査用ログ
-        console.warn(`[CSRF-DEBUG] Token missing for ${method} ${url}. All cookies:`, document.cookie)
+        console.warn(`[CSRF-DEBUG] Token missing for ${method} ${url}`)
+        console.warn(`[CSRF-DEBUG] getCookie result:`, csrf)
+        console.warn(`[CSRF-DEBUG] Raw cookie string:`, document.cookie)
+        console.warn(`[CSRF-DEBUG] Parsed cookies:`, document.cookie.split(';').map(c => c.trim()))
       }
     }
     return config
