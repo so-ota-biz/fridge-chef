@@ -11,8 +11,15 @@ const getCookie = (name: string): string | undefined => {
   if (!isBrowser()) return undefined
 
   try {
-    const value = document.cookie.split('; ').find((row) => row.startsWith(`${name}=`))
-    return value ? decodeURIComponent(value.split('=')[1]) : undefined
+    // より厳密なクッキー検索（境界チェック）
+    const cookies = document.cookie.split(';').map(cookie => cookie.trim())
+    for (const cookie of cookies) {
+      if (cookie.startsWith(`${name}=`)) {
+        const value = cookie.substring(`${name}=`.length)
+        return value ? decodeURIComponent(value) : undefined
+      }
+    }
+    return undefined
   } catch (error) {
     // Cookie解析エラー時はundefinedを返す
     console.warn(`Failed to parse cookie '${name}':`, error)
@@ -50,6 +57,14 @@ apiClient.interceptors.request.use(
       const csrf = getCookie('csrfToken')
       if (csrf && config.headers) {
         config.headers['X-CSRF-Token'] = csrf
+      } else {
+        // Development-only detailed logging
+        if (process.env.NODE_ENV === 'development') {
+          const cookieNames = document.cookie.split(';').map(c => c.trim().split('=')[0])
+          console.warn(`CSRF token missing for ${method} ${url}. Available cookie names:`, cookieNames)
+        } else {
+          console.warn(`CSRF token missing for ${method} ${url}`)
+        }
       }
     }
     return config
