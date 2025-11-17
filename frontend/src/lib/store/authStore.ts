@@ -5,6 +5,16 @@ import { persist } from 'zustand/middleware'
 import type { AuthUser } from '@/types/user'
 import * as authApi from '@/lib/api/auth'
 
+// CSRFクッキー設定完了を確実に待機するユーティリティ
+const waitForCookie = async (cookieName: string, maxAttempts = 20): Promise<boolean> => {
+  for (let i = 0; i < maxAttempts; i++) {
+    const cookie = document.cookie.split(';').find(c => c.trim().startsWith(`${cookieName}=`))
+    if (cookie) return true
+    await new Promise(resolve => setTimeout(resolve, 50)) // 50ms間隔でチェック
+  }
+  return false
+}
+
 // ========================================
 // 状態とアクションの型定義
 // ========================================
@@ -85,13 +95,22 @@ export const useAuthStore = create<AuthState>()(
               displayName: me.displayName,
               avatarUrl: me.avatarUrl,
             }
-            set({ user: nextUser, isAuthenticated: true, isAuthRestored: true })
-            // 認証成功時もCSRFトークンを確実に取得
+
+            // 認証成功時：CSRFトークン取得→状態更新の順序で実行
             await authApi.initializeCsrf()
-          } catch {
+            // CSRFクッキー設定完了を確実に待機
+            const csrfReady = await waitForCookie('csrfToken')
+            if (!csrfReady) {
+              console.warn('[AUTH-DEBUG] CSRF cookie not detected after initialization')
+            }
+            set({ user: nextUser, isAuthenticated: true, isAuthRestored: true })
+            
+            console.log('[AUTH-DEBUG] Authentication restored, cookies:', document.cookie.split(';').length)
+          } catch (error) {
             // 認証失敗時はCSRFトークンだけ取得（未認証でも変更系リクエストに備えて）
             await authApi.initializeCsrf()
             set({ isAuthRestored: true, isAuthenticated: false, user: null })
+            console.log('[AUTH-DEBUG] Authentication failed, cookies after CSRF init:', document.cookie.split(';').length)
           }
         })()
       },
