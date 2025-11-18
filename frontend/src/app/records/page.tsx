@@ -76,7 +76,7 @@ const RecordsPageContent = () => {
             <Text size="lg" c="dimmed">
               まだ調理記録がありません
             </Text>
-            <Group>
+            <Group justify="center">
               <Button size="lg" onClick={handleStartNewSearch}>
                 レシピを探す
               </Button>

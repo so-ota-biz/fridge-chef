@@ -29,12 +29,47 @@ export const Header = ({ opened, toggle }: HeaderProps) => {
   const isProfileImplemented = implementedPages.includes('/user/profile')
 
   return (
-    <Group h="100%" px="md" justify="space-between">
+    <Group
+      h="100%"
+      px="md"
+      justify="space-between"
+      style={{
+        flexWrap: 'nowrap',
+        minWidth: 0, // 子要素の縮小を許可
+      }}
+    >
       {/* 左側: ハンバーガーメニュー + ロゴ */}
-      <Group>
-        <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-        <UnstyledButton component={Link} href="/">
-          <Text size="xl" fw={700} c="orange">
+      <Group
+        style={{
+          flexShrink: 1,
+          minWidth: 0,
+          flexWrap: 'nowrap', // 折り返しを防止
+        }}
+      >
+        <Burger
+          opened={opened}
+          onClick={toggle}
+          hiddenFrom="sm"
+          size="sm"
+          style={{ flexShrink: 0 }} // ハンバーガーメニューは縮小しない
+        />
+        <UnstyledButton
+          component={Link}
+          href="/"
+          style={{
+            minWidth: 0,
+            flexShrink: 1, // ボタン自体を縮小可能に
+          }}
+        >
+          <Text
+            size="xl"
+            fw={700}
+            c="orange"
+            truncate
+            style={{
+              minWidth: '40px', // 最小幅をさらに縮小
+            }}
+          >
             {process.env.NEXT_PUBLIC_APP_NAME || 'FridgeChef'}
           </Text>
         </UnstyledButton>
@@ -65,7 +100,8 @@ export const Header = ({ opened, toggle }: HeaderProps) => {
       <Menu shadow="md" width={200} position="bottom-end">
         <Menu.Target>
           <UnstyledButton>
-            <Group gap="sm">
+            {/* PCサイズ */}
+            <Group gap="sm" visibleFrom="sm">
               <Avatar
                 src={user?.avatarUrl}
                 alt={user?.displayName ?? user?.email ?? ''}
@@ -77,6 +113,54 @@ export const Header = ({ opened, toggle }: HeaderProps) => {
                   {user?.displayName || 'ユーザー'}
                 </Text>
                 <Text size="xs" c="dimmed">
+                  {user?.email}
+                </Text>
+              </div>
+            </Group>
+
+            {/* スマホサイズ */}
+            <Group
+              gap="xs"
+              hiddenFrom="sm"
+              style={{
+                padding: '4px 8px',
+                flexShrink: 1,
+                minWidth: 0,
+                maxWidth: '150px', // 最大幅を制限
+              }}
+            >
+              <Avatar
+                src={user?.avatarUrl}
+                alt={user?.displayName ?? user?.email ?? ''}
+                radius="xl"
+                size="sm"
+                style={{ flexShrink: 0 }} // アバターは縮小しない
+              />
+              <div
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                }}
+              >
+                <Text
+                  size="xs"
+                  fw={500}
+                  truncate
+                  style={{
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {user?.displayName || 'ユーザー'}
+                </Text>
+                <Text
+                  size="xs"
+                  c="dimmed"
+                  truncate
+                  style={{
+                    fontSize: '10px',
+                    lineHeight: 1.1,
+                  }}
+                >
                   {user?.email}
                 </Text>
               </div>
