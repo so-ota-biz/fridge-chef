@@ -34,10 +34,6 @@ const IngredientsPage = () => {
   }
 
   const handleNext = () => {
-    if (selectedIngredients.length < 2) {
-      alert('最低2つ以上の食材を選択してください')
-      return
-    }
     router.push('/conditions')
   }
 
@@ -116,14 +112,21 @@ const IngredientsPage = () => {
               ))}
           </Stack>
 
-          <Group justify="space-between" mt="xl" mb="xl">
-            <Button variant="outline" onClick={() => router.push('/')}>
-              トップに戻る
-            </Button>
-            <Button onClick={handleNext} disabled={selectedIngredients.length < 2}>
-              次へ（条件指定）
-            </Button>
-          </Group>
+          <Stack gap="xs" mt="xl" mb="xl">
+            <Group justify="space-between">
+              <Button variant="outline" onClick={() => router.push('/')}>
+                トップに戻る
+              </Button>
+              <Button onClick={handleNext} disabled={selectedIngredients.length < 2}>
+                次へ（条件指定）
+              </Button>
+            </Group>
+            {selectedIngredients.length < 2 && (
+              <Text size="sm" c="gray.6" ta="right">
+                食材を{2 - selectedIngredients.length}個以上選択してください
+              </Text>
+            )}
+          </Stack>
         </Stack>
       </Container>
     </MainLayout>

@@ -96,7 +96,16 @@ export default function HomePage() {
                 今日も美味しい料理を作りましょう
               </Text>
               <div>
-                <Button size="lg" onClick={handleStartNewSearch}>
+                <Button
+                  size="lg"
+                  onClick={handleStartNewSearch}
+                  style={{
+                    width: 'clamp(190px, 100%, 400px)', // 最小幅を190pxに設定
+                    fontSize: 'clamp(11px, 3.5vw, 16px)', // フォントサイズを調整
+                    whiteSpace: 'nowrap',
+                    padding: '12px 8px', // 左右のパディングを縮小
+                  }}
+                >
                   食材を選んでレシピを探す
                 </Button>
               </div>

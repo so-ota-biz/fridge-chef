@@ -61,7 +61,11 @@ export const RecordCard = ({ record }: RecordCardProps) => {
         />
       </Card.Section>
 
-      <Stack gap="xs" mt="md" style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: '16px' }}>
+      <Stack
+        gap="xs"
+        mt="md"
+        style={{ flex: 1, display: 'flex', flexDirection: 'column', paddingBottom: '16px' }}
+      >
         <Text fw={500} lineClamp={2} style={{ minHeight: '2.5rem' }}>
           {record.recipe.title}
         </Text>
@@ -75,9 +79,9 @@ export const RecordCard = ({ record }: RecordCardProps) => {
           {record.memo || ''}
         </Text>
 
-        <Button 
-          variant="light" 
-          fullWidth 
+        <Button
+          variant="light"
+          fullWidth
           onClick={() => router.push(`/records?id=${record.id}`)}
           style={{ marginBottom: 0 }}
         >
