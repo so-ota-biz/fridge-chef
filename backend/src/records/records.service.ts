@@ -73,7 +73,13 @@ export class RecordsService {
           [query.sortBy || 'cookedAt']: query.order || 'desc',
         },
         include: {
-          recipe: true,
+          recipe: {
+            select: {
+              id: true,
+              title: true,
+              imageUrl: true,
+            },
+          },
         },
       }),
       this.prisma.record.count({ where }),
