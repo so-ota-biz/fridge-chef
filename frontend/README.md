@@ -35,6 +35,11 @@ NEXT_PUBLIC_APP_NAME=FridgeChef
 NEXT_PUBLIC_API_URL=http://localhost:3000 # NestJS バックエンドの URL
 ```
 
+補足
+
+- バックエンドは `http://localhost:3000` で待ち受けます（backend/README.md の Docker 前提手順に従って起動）。
+- CORS を通すため、バックエンド側では `FRONTEND_URL` を `http://localhost:3001`（末尾スラッシュなし）に設定してください。
+
 ## セットアップ
 
 1. 依存関係インストール
@@ -52,13 +57,7 @@ NEXT_PUBLIC_API_URL=http://localhost:3000 # NestJS バックエンドの URL
 
 3. ブラウザで `http://localhost:3001` を開く
 
-バックエンド（`/backend` ディレクトリの NestJS アプリ）はポート 3000 で起動し、`NEXT_PUBLIC_API_URL` で指定した URL（デフォルト: `http://localhost:3000`）を受け付けるようにします。
-
-```bash
-cd backend
-npm install
-npm run start:dev
-```
+バックエンドの起動は `backend/README.md` を参照してください（Docker 前提）。`NEXT_PUBLIC_API_URL` はバックエンドの URL（デフォルト: `http://localhost:3000`）に合わせます。
 
 ## 認証フロー
 
@@ -77,4 +76,9 @@ npm run format:check
 
 ## デプロイ
 
-`next build` → `next export` により静的ファイルを生成し、S3 + CloudFront などに配置予定です。CSP などのヘッダーはホスティング側（例: CloudFront レスポンスヘッダーポリシー）で設定してください。
+- 推奨: Vercel（本番 URL 例: `https://fridge-chef-tau.vercel.app`）
+- 環境変数
+  - `NEXT_PUBLIC_API_URL`: バックエンドの公開 URL（Render など）
+- 注意
+  - CORS はバックエンド側で `FRONTEND_URL`（Vercel の URL）と完全一致（末尾スラッシュなし）になるよう設定
+  - 画像や API の通信先が混在しないよう、本番・開発それぞれに適切な URL を設定
