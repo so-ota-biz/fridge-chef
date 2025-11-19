@@ -3,11 +3,22 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
 import { ModalsProvider } from '@mantine/modals'
-import { useState, useEffect } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { theme } from '@/styles/theme'
 import { useAuthStore } from '@/lib/store'
 
+// QueryClientをコンポーネント外で作成（シングルトンにする）
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60 * 1000, // 1分
+      refetchOnWindowFocus: false,
+    },
+  },
+})
+
+// ==============================
 // 認証状態復元コンポーネント
 const AuthRestorer = ({ children }: { children: React.ReactNode }) => {
   const restoreAuth = useAuthStore((state) => state.restoreAuth)
@@ -22,17 +33,6 @@ const AuthRestorer = ({ children }: { children: React.ReactNode }) => {
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter()
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: {
-            staleTime: 60 * 1000, // 1分
-            refetchOnWindowFocus: false,
-          },
-        },
-      }),
-  )
   const clearAuth = useAuthStore((state) => state.clearAuth)
 
   useEffect(() => {
