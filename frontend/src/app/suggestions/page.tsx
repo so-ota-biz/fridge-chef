@@ -1,5 +1,6 @@
 'use client'
 
+import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useCallback } from 'react'
 import {
   Container,
@@ -19,6 +20,8 @@ import { MainLayout } from '@/components/layout'
 import { RecipeCard } from '@/components/recipe'
 import { useRecipeGeneration } from '@/lib/hooks'
 import { useIngredientStore, useConditionStore, useRecipeStore } from '@/lib/store'
+import type { RecipeGenerateResponse } from '@/types/recipe'
+import { useQueryClient } from '@tanstack/react-query'
 
 const SuggestionsPage = () => {
   const router = useRouter()
@@ -27,8 +30,28 @@ const SuggestionsPage = () => {
   const { genre, difficulty, cookingTime, servings } = useConditionStore()
   const { generatedRecipes, setGeneratedRecipes, clearGeneratedRecipes } = useRecipeStore()
 
+  // queryキャッシュを監視（リアクティブ）
+  const { data: cachedData } = useQuery<RecipeGenerateResponse>({
+    queryKey: ['generatedRecipes'],
+    queryFn: () => {
+      // キャッシュのみ使用、実際には呼ばれない
+      throw new Error('This should not be called')
+    },
+    enabled: false,
+    staleTime: Infinity,
+  })
   const { mutate, data, isPending, isError, error } = useRecipeGeneration()
   const hasTriedGeneration = useRef(false)
+
+  // cachedDataがあればローディング終了
+  const finalData = data || cachedData
+  const isActuallyLoading = isPending && !cachedData
+
+  useEffect(() => {
+    if (finalData && !generatedRecipes) {
+      setGeneratedRecipes(finalData)
+    }
+  }, [data, cachedData, generatedRecipes, setGeneratedRecipes, finalData])
 
   const handleGenerate = useCallback(() => {
     mutate({
@@ -82,7 +105,7 @@ const SuggestionsPage = () => {
     )
   }
 
-  if (isPending) {
+  if (isActuallyLoading) {
     return (
       <MainLayout>
         <Container size="md" mt="xl">
@@ -155,7 +178,7 @@ const SuggestionsPage = () => {
   }
 
   // 表示用のデータ: mutationの結果を優先、なければストアのデータを使用
-  const recipes = data || generatedRecipes
+  const recipes = finalData || generatedRecipes
 
   if (!recipes || recipes.recipes.length === 0) {
     return (
