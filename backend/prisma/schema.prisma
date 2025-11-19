@@ -120,5 +120,8 @@ model Record {
   @@index([userId], map: "idx_records_user_id")
   @@index([recipeId], map: "idx_records_recipe_id")
   @@index([cookedAt], map: "idx_records_cooked_at")
+  // Compound indexes to optimize WHERE userId + ORDER BY cookedAt/createdAt
+  @@index([userId, cookedAt], map: "idx_records_user_cooked_at")
+  @@index([userId, createdAt], map: "idx_records_user_created_at")
   @@map("records")
 }
