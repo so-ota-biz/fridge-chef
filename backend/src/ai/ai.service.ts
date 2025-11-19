@@ -216,8 +216,9 @@ export class AiService {
 
     // Docker環境の内部URLを公開URLに置換
     const publicUrl = this.configService.get<string>('SUPABASE_PUBLIC_URL')
+    const internalUrl = this.configService.get<string>('SUPABASE_INTERNAL_URL')
     const convertedUrl = urlData.publicUrl.replace(
-      'http://supabase_kong_backend:8000',
+      internalUrl || 'http://supabase_kong_fridge-chef:8000',
       publicUrl || 'http://127.0.0.1:54321',
     )
 
