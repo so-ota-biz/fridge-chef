@@ -34,7 +34,7 @@
 - Windows（Scoop）:
   - `scoop bucket add supabase https://github.com/supabase/scoop-bucket.git`
   - `scoop install supabase`
-- Linux: https://supabase.com/docs/guides/cli/getting-started を参照
+- Linux: [CLI Getting Started](https://supabase.com/docs/guides/cli/getting-started) を参照
 
 ### 環境変数
 
@@ -60,13 +60,13 @@
 
 Docker 用の個別データベース変数（Docker Compose 使用時のみ）
 
-| 変数名        | 用途                   | デフォルト値          |
-| ------------- | ---------------------- | --------------------- |
-| `DB_HOST`     | データベースホスト名   | `supabase_db_backend` |
-| `DB_PORT`     | データベースポート     | `5432`                |
-| `DB_NAME`     | データベース名         | `postgres`            |
-| `DB_USER`     | データベースユーザー名 | `postgres`            |
-| `DB_PASSWORD` | データベースパスワード | `postgres`            |
+| 変数名        | 用途                   | デフォルト値              |
+| ------------- | ---------------------- | ------------------------- |
+| `DB_HOST`     | データベースホスト名   | `supabase_db_fridge-chef` |
+| `DB_PORT`     | データベースポート     | `5432`                    |
+| `DB_NAME`     | データベース名         | `postgres`                |
+| `DB_USER`     | データベースユーザー名 | `postgres`                |
+| `DB_PASSWORD` | データベースパスワード | `postgres`                |
 
 Supabase 関連
 
@@ -180,7 +180,7 @@ Supabase 関連
   - 説明:
     - レシピ生成（GPT-4）とレシピ画像生成（DALL-E 3）に使用
     - 必ず自分の API キーに変更すること
-    - 取得方法: https://platform.openai.com/api-keys
+    - 取得方法: [OpenAI API Keys](https://platform.openai.com/api-keys)
 
 - `OPENAI_API_BASE_URL`
   - 用途: OpenAI API のベース URL
@@ -230,7 +230,7 @@ OPENAI_GPT_MODEL="gpt-4o"
 
 ```bash
 # Database (Docker 用)
-DB_HOST="supabase_db_backend"
+DB_HOST="supabase_db_fridge-chef"
 DB_PORT="5432"
 DB_NAME="postgres"
 DB_USER="postgres"
@@ -362,7 +362,7 @@ docker compose up -d --build
 
 - 本番のクロスサイト構成（例: Frontend=Vercel / Backend=Render）では、`FRONTEND_URL` と CORS の `origin` を完全一致（末尾スラなし）にしてください。
 - フロントでは `NEXT_PUBLIC_API_URL` にバックエンドの公開 URL を設定します。
-- 本番環境例: https://fridge-chef-tau.vercel.app
+- 本番環境例: `https://fridge-chef-tau.vercel.app`
 
 ---
 
