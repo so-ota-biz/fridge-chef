@@ -1,0 +1,28 @@
+{
+  "name": "fridge-chef",
+  "version": "1.0.0",
+  "description": "冷蔵庫にある食材から、AI が最適な料理レシピを提案する Web アプリケーションです。",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "husky install"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7"
+  },
+  "lint-staged": {
+    "backend/**/*.ts": [
+      "bash -c 'cd backend && npm run lint --fix'"
+    ],
+    "frontend/**/*.{ts,tsx}": [
+      "bash -c 'cd frontend && npm run lint --fix'"
+    ]
+  }
+}
