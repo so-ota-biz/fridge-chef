@@ -9,7 +9,9 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix .",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,mjs,json,css,md}\"",
-    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,mjs,json,css,md}\""
+    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,mjs,json,css,md}\"",
+    "type-check": "tsc --noEmit",
+    "validate": "npm run type-check && npm run lint"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
