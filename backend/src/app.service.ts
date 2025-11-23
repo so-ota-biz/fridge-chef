@@ -1,9 +1,9 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common'
 import { PrismaService } from '@/prisma/prisma.service'
-import { InternalServerErrorException } from '@nestjs/common'
 
 @Injectable()
 export class AppService {
+  private readonly logger = new Logger(AppService.name)
   constructor(private prisma: PrismaService) {}
 
   getHello(): string {
@@ -17,6 +17,7 @@ export class AppService {
       await this.prisma.user.count()
       return 'Database connection OK'
     } catch (error) {
+      this.logger.error('Database connection check failed', error)
       throw new InternalServerErrorException('Database connection failed')
     }
   }
