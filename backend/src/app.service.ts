@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { PrismaService } from '@/prisma/prisma.service'
+import { InternalServerErrorException } from '@nestjs/common'
 
 @Injectable()
 export class AppService {
@@ -12,7 +13,11 @@ export class AppService {
 
   async dbCheck(): Promise<string> {
     // データベース接続テスト
-    const userCount = await this.prisma.user.count()
-    return `Hello World! Users in DB: ${userCount}`
+    try {
+      await this.prisma.user.count()
+      return 'Database connection OK'
+    } catch (error) {
+      throw new InternalServerErrorException('Database connection failed')
+    }
   }
 }
