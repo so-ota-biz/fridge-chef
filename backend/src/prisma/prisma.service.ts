@@ -5,13 +5,17 @@ import { PrismaClient } from '@prisma/client'
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PrismaService.name)
   constructor() {
+    const logLevels: Array<'query' | 'info' | 'warn' | 'error'> = process.env.PRISMA_LOG_LEVEL
+      ? (process.env.PRISMA_LOG_LEVEL.split(',') as Array<'query' | 'info' | 'warn' | 'error'>)
+      : ['warn', 'error'] // デフォルトは警告とエラーのみ
+
     super({
       datasources: {
         db: {
           url: process.env.DATABASE_URL,
         },
       },
-      log: ['query', 'info', 'warn', 'error'],
+      log: logLevels,
     })
   }
 
