@@ -4,7 +4,6 @@ import { PrismaService } from '@/prisma/prisma.service'
 
 describe('CategoriesService', () => {
   let service: CategoriesService
-  let prismaService: PrismaService
 
   const mockPrismaService = {
     category: {
@@ -13,6 +12,8 @@ describe('CategoriesService', () => {
   }
 
   beforeEach(async () => {
+    jest.clearAllMocks()
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CategoriesService,
@@ -24,10 +25,36 @@ describe('CategoriesService', () => {
     }).compile()
 
     service = module.get<CategoriesService>(CategoriesService)
-    prismaService = module.get<PrismaService>(PrismaService)
   })
 
   it('should be defined', () => {
     expect(service).toBeDefined()
+  })
+
+  describe('findAll', () => {
+    it('should return all categories ordered by sortOrder', async () => {
+      const mockCategories = [
+        { id: 1, name: '野菜', sortOrder: 1 },
+        { id: 2, name: '肉類', sortOrder: 2 },
+        { id: 3, name: '魚介類', sortOrder: 3 },
+      ]
+
+      mockPrismaService.category.findMany.mockResolvedValue(mockCategories)
+
+      const result = await service.findAll()
+
+      expect(result).toEqual(mockCategories)
+      expect(mockPrismaService.category.findMany).toHaveBeenCalledWith({
+        orderBy: { sortOrder: 'asc' },
+      })
+    })
+
+    it('should return empty array if no categories found', async () => {
+      mockPrismaService.category.findMany.mockResolvedValue([])
+
+      const result = await service.findAll()
+
+      expect(result).toEqual([])
+    })
   })
 })
